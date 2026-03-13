@@ -338,6 +338,16 @@ tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
 .btn-outline{background:transparent;border:1.5px solid var(--default-200);color:var(--foreground-500);padding:7px 14px;font-size:12px;border-radius:var(--radius-sm)}
 .btn-outline:hover{border-color:var(--default-300);color:var(--foreground);background:var(--default-100)}
 
+/* ─── Crash Chart Filters ─── */
+.crash-chart-filters{display:flex;gap:16px;flex-wrap:wrap;align-items:center;margin-bottom:14px;padding:10px 12px;background:var(--default-100);border-radius:var(--radius-sm)}
+.ccf-group{display:flex;align-items:center;gap:6px}
+.ccf-label{font-size:10px;font-weight:600;color:var(--foreground-400);text-transform:uppercase;letter-spacing:.5px;white-space:nowrap}
+.ccf-btns{display:flex;gap:2px}
+.ccf-stats{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:10px;padding:0 2px}
+.ccf-stat{font-size:11px;color:var(--foreground-400)}
+.ccf-stat b{color:var(--foreground);font-weight:600}
+@media(max-width:640px){.crash-chart-filters{gap:10px;padding:8px}.ccf-group{flex-wrap:wrap}}
+
 /* ─── Login Screen ─── */
 .login-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .3s}
 .login-overlay.hidden{opacity:0;pointer-events:none}
@@ -583,6 +593,36 @@ tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
     </div>
     <div class="chart-card">
       <div class="chart-header"><div class="chart-label">Recent Crash Points</div><div class="chart-legend"><span class="chart-legend-item"><span class="chart-legend-dot" style="background:#f31260"></span>&lt;2x</span><span class="chart-legend-item"><span class="chart-legend-dot" style="background:#f5a524"></span>2-5x</span><span class="chart-legend-item"><span class="chart-legend-dot" style="background:#006FEE"></span>5-10x</span><span class="chart-legend-item"><span class="chart-legend-dot" style="background:#17c964"></span>10x+</span></div></div>
+      <div class="crash-chart-filters">
+        <div class="ccf-group">
+          <span class="ccf-label">Rounds</span>
+          <div class="ccf-btns" id="ccfRounds">
+            <button class="tf-btn" data-ccr="25" onclick="setCcfRounds(25)">25</button>
+            <button class="tf-btn" data-ccr="50" onclick="setCcfRounds(50)">50</button>
+            <button class="tf-btn active" data-ccr="100" onclick="setCcfRounds(100)">100</button>
+            <button class="tf-btn" data-ccr="200" onclick="setCcfRounds(200)">200</button>
+            <button class="tf-btn" data-ccr="500" onclick="setCcfRounds(500)">All</button>
+          </div>
+        </div>
+        <div class="ccf-group">
+          <span class="ccf-label">Range</span>
+          <div class="ccf-btns" id="ccfRange">
+            <button class="tf-btn active" data-ccv="all" onclick="setCcfRange('all')">All</button>
+            <button class="tf-btn" data-ccv="low" onclick="setCcfRange('low')">&lt;2x</button>
+            <button class="tf-btn" data-ccv="mid" onclick="setCcfRange('mid')">2-5x</button>
+            <button class="tf-btn" data-ccv="high" onclick="setCcfRange('high')">5-10x</button>
+            <button class="tf-btn" data-ccv="moon" onclick="setCcfRange('moon')">10x+</button>
+          </div>
+        </div>
+        <div class="ccf-group">
+          <span class="ccf-label">Scale</span>
+          <div class="ccf-btns" id="ccfScale">
+            <button class="tf-btn active" data-ccs="log" onclick="setCcfScale('log')">Log</button>
+            <button class="tf-btn" data-ccs="linear" onclick="setCcfScale('linear')">Linear</button>
+          </div>
+        </div>
+      </div>
+      <div class="ccf-stats" id="ccfStats"></div>
       <div class="area-chart-wrap">
         <div class="area-chart-inner" id="crashAreaChart"></div>
         <div class="area-chart-x" id="crashAreaAxis"></div>
@@ -860,6 +900,152 @@ function _filterByTime(rounds,filter){
   });
 }
 
+// ─── Crash Chart Filters ───
+var _ccfRounds=100;
+var _ccfRange='all';
+var _ccfScale='log';
+var _ccfAllData=[];
+
+function setCcfRounds(n){
+  _ccfRounds=n;
+  document.querySelectorAll('#ccfRounds .tf-btn').forEach(function(b){b.classList.toggle('active',parseInt(b.getAttribute('data-ccr'))===n)});
+  _renderCrashChart();
+}
+function setCcfRange(r){
+  _ccfRange=r;
+  document.querySelectorAll('#ccfRange .tf-btn').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-ccv')===r)});
+  _renderCrashChart();
+}
+function setCcfScale(s){
+  _ccfScale=s;
+  document.querySelectorAll('#ccfScale .tf-btn').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-ccs')===s)});
+  _renderCrashChart();
+}
+
+function _filterCcfRange(arr){
+  if(_ccfRange==='all')return arr;
+  return arr.filter(function(r){
+    var v=r.v;
+    if(_ccfRange==='low')return v<2;
+    if(_ccfRange==='mid')return v>=2&&v<5;
+    if(_ccfRange==='high')return v>=5&&v<10;
+    if(_ccfRange==='moon')return v>=10;
+    return true;
+  });
+}
+
+function _renderCrashChart(){
+  var h=_ccfAllData;if(!h||!h.length)return;
+  var sliced=h.slice(0,_ccfRounds);
+  var filtered=_filterCcfRange(sliced);
+  var rc=filtered.slice().reverse();
+  var areaEl=document.getElementById('crashAreaChart');
+  var axisEl=document.getElementById('crashAreaAxis');
+  var statsEl=document.getElementById('ccfStats');
+  if(!areaEl)return;
+
+  // Stats bar
+  if(filtered.length){
+    var sum=0,mn=Infinity,mx=0,lt2=0;
+    filtered.forEach(function(r){sum+=r.v;if(r.v<mn)mn=r.v;if(r.v>mx)mx=r.v;if(r.v<2)lt2++});
+    var avg=sum/filtered.length;
+    var lt2Pct=((lt2/filtered.length)*100).toFixed(1);
+    var med=filtered.slice().sort(function(a,b){return a.v-b.v});
+    var median=med.length%2===0?(med[med.length/2-1].v+med[med.length/2].v)/2:med[Math.floor(med.length/2)].v;
+    if(statsEl)statsEl.innerHTML=
+      '<span class="ccf-stat">Showing <b>'+filtered.length+'</b> of '+sliced.length+'</span>'+
+      '<span class="ccf-stat">Avg <b>'+avg.toFixed(2)+'x</b></span>'+
+      '<span class="ccf-stat">Median <b>'+median.toFixed(2)+'x</b></span>'+
+      '<span class="ccf-stat">Min <b style="color:var(--danger)">'+mn.toFixed(2)+'x</b></span>'+
+      '<span class="ccf-stat">Max <b style="color:var(--success)">'+mx.toFixed(2)+'x</b></span>'+
+      '<span class="ccf-stat">&lt;2x <b style="color:var(--danger)">'+lt2Pct+'%</b></span>';
+  }else{if(statsEl)statsEl.innerHTML=''}
+
+  if(!rc.length){areaEl.innerHTML='<div class="empty-msg">No matching rounds</div>';axisEl.innerHTML='';return}
+
+  // Dimensions
+  var padL=38,padR=12,padT=16,padB=28;
+  var bw=areaEl.offsetWidth||600,bh2=180;
+  var cw=bw-padL-padR,ch2=bh2-padT-padB;
+  // Scale
+  var useLog=(_ccfScale==='log');
+  var vals=rc.map(function(r){return useLog?Math.log(Math.max(r.v,1.01)):r.v});
+  var mxVal=Math.max.apply(null,vals)||1;
+  var mnVal=useLog?0:Math.min.apply(null,vals);
+  if(!useLog&&mxVal===mnVal){mxVal+=1}
+  // Points
+  var pts=rc.map(function(r,i){
+    var x=padL+(rc.length>1?i*(cw/(rc.length-1)):cw/2);
+    var yNorm=(vals[i]-mnVal)/(mxVal-mnVal);
+    var y=padT+ch2-(yNorm*ch2);
+    return{x:x,y:y,v:r.v,rnd:r.round};
+  });
+  function _vc(v){return v>=10?'#17c964':v>=5?'#006FEE':v>=2?'#f5a524':'#f31260'}
+  function _smooth(pts){
+    if(pts.length<2)return'M'+pts[0].x+','+pts[0].y;
+    var d='M'+pts[0].x+','+pts[0].y;
+    for(var i=0;i<pts.length-1;i++){
+      var cx=(pts[i].x+pts[i+1].x)/2;
+      d+=' C'+cx+','+pts[i].y+' '+cx+','+pts[i+1].y+' '+pts[i+1].x+','+pts[i+1].y;
+    }
+    return d;
+  }
+  var linePath=_smooth(pts);
+  var areaPath=linePath+' L'+pts[pts.length-1].x+','+(padT+ch2)+' L'+pts[0].x+','+(padT+ch2)+' Z';
+  // Grid lines + Y labels
+  var gridY='';var yLabels=[];
+  for(var gi=0;gi<=4;gi++){
+    var gy=padT+ch2-(gi/4)*ch2;
+    gridY+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(padL+cw)+'" y2="'+gy+'"/>';
+    var lv=useLog?Math.exp(mnVal+(gi/4)*mxVal):mnVal+(gi/4)*(mxVal-mnVal);
+    yLabels.push({y:gy,label:lv<10?lv.toFixed(1)+'x':Math.round(lv)+'x'});
+  }
+  // SVG
+  var svg='<svg class="area-chart-svg" viewBox="0 0 '+bw+' '+bh2+'" preserveAspectRatio="none">';
+  svg+='<defs>';
+  svg+='<linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">';
+  svg+='<stop offset="0%" stop-color="#006FEE" stop-opacity=".35"/>';
+  svg+='<stop offset="100%" stop-color="#006FEE" stop-opacity="0"/>';
+  svg+='</linearGradient>';
+  svg+='<linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">';
+  svg+='<stop offset="0%" stop-color="#006FEE"/><stop offset="50%" stop-color="#17c964"/><stop offset="100%" stop-color="#006FEE"/>';
+  svg+='</linearGradient>';
+  svg+='</defs>';
+  svg+='<g class="area-chart-grid">'+gridY+'</g>';
+  svg+='<path class="area-chart-fill" d="'+areaPath+'" fill="url(#areaGrad)"/>';
+  svg+='<path class="area-chart-line" d="'+linePath+'" stroke="url(#lineGrad)"/>';
+  // Dots — skip if too many to keep it clean
+  var showDots=rc.length<=100;
+  if(showDots){pts.forEach(function(p,i){
+    svg+='<circle class="area-chart-dot" cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="'+_vc(p.v)+'" stroke="#18181b" stroke-width="1.5" data-i="'+i+'"/>';
+  })}
+  svg+='</svg>';
+  var yHtml='<div class="area-chart-y">';
+  yLabels.reverse().forEach(function(yl){yHtml+='<span>'+yl.label+'</span>'});
+  yHtml+='</div>';
+  var ttHtml='<div class="area-tooltip" id="areaTT"></div>';
+  areaEl.innerHTML=svg+yHtml+ttHtml;
+  // Axis
+  if(rc.length>1){axisEl.innerHTML='<span>#'+rc[0].round+'</span><span>'+rc.length+' rounds</span><span>#'+rc[rc.length-1].round+'</span>'}
+  else if(rc.length===1){axisEl.innerHTML='<span>#'+rc[0].round+'</span>'}
+  else{axisEl.innerHTML=''}
+  // Hover
+  if(showDots){
+    var tt=document.getElementById('areaTT');
+    areaEl.querySelectorAll('.area-chart-dot').forEach(function(dot){
+      dot.addEventListener('mouseenter',function(){
+        var i=parseInt(dot.getAttribute('data-i'));
+        var p=pts[i];if(!p)return;
+        var c=_vc(p.v);
+        tt.innerHTML='<div class="tt-val" style="color:'+c+'">'+p.v.toFixed(2)+'x</div><div class="tt-sub">Round #'+p.rnd+'</div>';
+        tt.style.left=p.x+'px';tt.style.top=(p.y-10)+'px';
+        tt.classList.add('show');
+      });
+      dot.addEventListener('mouseleave',function(){tt.classList.remove('show')});
+    });
+  }
+}
+
 function loadDashboard(){
   if(typeof FB!=='undefined'&&FB.isOnline()){
     FB.loadRounds().then(function(fbRounds){
@@ -946,92 +1132,8 @@ function _renderDashboard(h,bh){
   var _dl=document.getElementById('distLegend');if(_dl)_dl.innerHTML='<span class="chart-legend-item" style="font-size:10px;color:var(--foreground-400)">'+h.length+' rounds</span>';
 
   // ── Recent Crash Points — SVG Area Chart ──
-  var rc=h.slice(0,100).reverse();
-  var areaEl=document.getElementById('crashAreaChart');
-  var axisEl=document.getElementById('crashAreaAxis');
-  if(!rc.length){areaEl.innerHTML='<div class="empty-msg">No data</div>';axisEl.innerHTML=''}
-  if(rc.length){
-  // Dimensions
-  var padL=38,padR=12,padT=16,padB=28;
-  var bw=areaEl.offsetWidth||600,bh=180;
-  var cw=bw-padL-padR,ch=bh-padT-padB;
-  // Log scale for Y
-  var logVals=rc.map(function(r){return Math.log(Math.max(r.v,1.01))});
-  var mxLog=Math.max.apply(null,logVals)||1;
-  var minLog=0;
-  // Points
-  var pts=rc.map(function(r,i){
-    var x=padL+(rc.length>1?i*(cw/(rc.length-1)):cw/2);
-    var yNorm=(logVals[i]-minLog)/(mxLog-minLog);
-    var y=padT+ch-(yNorm*ch);
-    return{x:x,y:y,v:r.v,rnd:r.round};
-  });
-  // Color for value
-  function _vc(v){return v>=10?'#17c964':v>=5?'#006FEE':v>=2?'#f5a524':'#f31260'}
-  // Smooth bezier path
-  function _smooth(pts){
-    if(pts.length<2)return'M'+pts[0].x+','+pts[0].y;
-    var d='M'+pts[0].x+','+pts[0].y;
-    for(var i=0;i<pts.length-1;i++){
-      var cx=(pts[i].x+pts[i+1].x)/2;
-      d+=' C'+cx+','+pts[i].y+' '+cx+','+pts[i+1].y+' '+pts[i+1].x+','+pts[i+1].y;
-    }
-    return d;
-  }
-  var linePath=_smooth(pts);
-  var areaPath=linePath+' L'+pts[pts.length-1].x+','+(padT+ch)+' L'+pts[0].x+','+(padT+ch)+' Z';
-  // Grid lines
-  var gridY='';
-  var yLabels=[];
-  for(var gi=0;gi<=4;gi++){
-    var gy=padT+ch-(gi/4)*ch;
-    gridY+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(padL+cw)+'" y2="'+gy+'"/>';
-    var lv=Math.exp(minLog+(gi/4)*mxLog);
-    yLabels.push({y:gy,label:lv<10?lv.toFixed(1)+'x':Math.round(lv)+'x'});
-  }
-  // Build SVG
-  var svg='<svg class="area-chart-svg" viewBox="0 0 '+bw+' '+bh+'" preserveAspectRatio="none">';
-  svg+='<defs>';
-  svg+='<linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">';
-  svg+='<stop offset="0%" stop-color="#006FEE" stop-opacity=".35"/>';
-  svg+='<stop offset="100%" stop-color="#006FEE" stop-opacity="0"/>';
-  svg+='</linearGradient>';
-  svg+='<linearGradient id="lineGrad" x1="0" y1="0" x2="1" y2="0">';
-  svg+='<stop offset="0%" stop-color="#006FEE"/><stop offset="50%" stop-color="#17c964"/><stop offset="100%" stop-color="#006FEE"/>';
-  svg+='</linearGradient>';
-  svg+='</defs>';
-  svg+='<g class="area-chart-grid">'+gridY+'</g>';
-  svg+='<path class="area-chart-fill" d="'+areaPath+'" fill="url(#areaGrad)"/>';
-  svg+='<path class="area-chart-line" d="'+linePath+'" stroke="url(#lineGrad)"/>';
-  // Dots
-  pts.forEach(function(p,i){
-    svg+='<circle class="area-chart-dot" cx="'+p.x+'" cy="'+p.y+'" r="3.5" fill="'+_vc(p.v)+'" stroke="#18181b" stroke-width="1.5" data-i="'+i+'"/>';
-  });
-  svg+='</svg>';
-  // Y axis overlay
-  var yHtml='<div class="area-chart-y">';
-  yLabels.reverse().forEach(function(yl){yHtml+='<span>'+yl.label+'</span>'});
-  yHtml+='</div>';
-  // Tooltip
-  var ttHtml='<div class="area-tooltip" id="areaTT"></div>';
-  areaEl.innerHTML=svg+yHtml+ttHtml;
-  // Axis
-  if(rc.length>1){axisEl.innerHTML='<span>#'+rc[0].round+'</span><span>'+rc.length+' rounds</span><span>#'+rc[rc.length-1].round+'</span>'}
-  else{axisEl.innerHTML='<span>#'+rc[0].round+'</span>'}
-  // Hover events
-  var tt=document.getElementById('areaTT');
-  areaEl.querySelectorAll('.area-chart-dot').forEach(function(dot){
-    dot.addEventListener('mouseenter',function(){
-      var i=parseInt(dot.getAttribute('data-i'));
-      var p=pts[i];if(!p)return;
-      var c=_vc(p.v);
-      tt.innerHTML='<div class="tt-val" style="color:'+c+'">'+p.v.toFixed(2)+'x</div><div class="tt-sub">Round #'+p.rnd+'</div>';
-      tt.style.left=p.x+'px';tt.style.top=(p.y-10)+'px';
-      tt.classList.add('show');
-    });
-    dot.addEventListener('mouseleave',function(){tt.classList.remove('show')});
-  });
-  }
+  _ccfAllData=h;
+  _renderCrashChart();
 
   // ── Win Rate Donut ──
   var wrPct=totalBets?Math.round((w/totalBets)*100):0;
