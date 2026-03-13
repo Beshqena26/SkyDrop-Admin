@@ -43,11 +43,13 @@ var FB = (function() {
       return;
     }
     try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(FIREBASE_CONFIG);
-      }
-      _db = firebase.database();
-      _auth = firebase.auth();
+      // Use a SEPARATE app name ('admin') so the admin panel's anonymous
+      // auth session does NOT overwrite the game's auth in the same browser.
+      var _app = null;
+      firebase.apps.forEach(function(a) { if (a.name === 'admin') _app = a; });
+      if (!_app) _app = firebase.initializeApp(FIREBASE_CONFIG, 'admin');
+      _db = _app.database();
+      _auth = _app.auth();
 
       _auth.signInAnonymously().then(function(result) {
         _uid = result.user.uid;
