@@ -249,13 +249,13 @@ tr:hover td{background:var(--default-100)}
 <div class="container">
   <!-- ─── Tabs ─── -->
   <div class="tabs-list">
-    <button class="tab-btn active" data-tab="settings" onclick="switchTab('settings')">Settings</button>
-    <button class="tab-btn" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab-btn" data-tab="settings" onclick="switchTab('settings')">Settings</button>
+    <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard')">Dashboard</button>
     <button class="tab-btn" data-tab="rounds" onclick="switchTab('rounds')">Round History</button>
   </div>
 
   <!-- ═══════ SETTINGS ═══════ -->
-  <div class="tab-panel active" id="tab-settings">
+  <div class="tab-panel" id="tab-settings">
 
     <div class="preset-row">
       <button class="preset-chip active" onclick="applyPreset('easy')" id="preEasy">
@@ -381,7 +381,7 @@ tr:hover td{background:var(--default-100)}
   </div>
 
   <!-- ═══════ DASHBOARD ═══════ -->
-  <div class="tab-panel" id="tab-dashboard">
+  <div class="tab-panel active" id="tab-dashboard">
     <div class="sec-bar">
       <div class="sec-title">Dashboard</div>
       <div class="sec-right">
@@ -940,6 +940,8 @@ if(typeof FB!=='undefined'){
       FB.loadConfig().then(function(cfg){
         if(cfg){_initConfig(cfg);localStorage.setItem('skydrop_admin_config',JSON.stringify(cfg))}
       });
+      // Load dashboard on startup (it's the default tab now)
+      loadDashboard();
       // Real-time dashboard updates
       FB.onNewRound(function(){
         var a=document.querySelector('.tab-panel.active');
@@ -949,6 +951,7 @@ if(typeof FB!=='undefined'){
     }else{
       st.textContent='Offline Mode (localStorage)';st.style.display='block';st.style.background='#312107';st.style.color='#f5a524';
       setTimeout(function(){st.style.display='none'},3000);
+      loadDashboard();
     }
   });
 }
