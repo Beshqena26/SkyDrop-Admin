@@ -971,12 +971,12 @@ function _renderCrashChart(){
   var useLog=(_ccfScale==='log');
   var vals=rc.map(function(r){return useLog?Math.log(Math.max(r.v,1.01)):r.v});
   var mxVal=Math.max.apply(null,vals)||1;
-  var mnVal=useLog?0:Math.min.apply(null,vals);
-  if(!useLog&&mxVal===mnVal){mxVal+=1}
+  var mnVal=0; // always start Y-axis at 0 for both scales
+  var range=mxVal-mnVal;if(range===0)range=1;
   // Points
   var pts=rc.map(function(r,i){
     var x=padL+(rc.length>1?i*(cw/(rc.length-1)):cw/2);
-    var yNorm=(vals[i]-mnVal)/(mxVal-mnVal);
+    var yNorm=(vals[i]-mnVal)/range;
     var y=padT+ch2-(yNorm*ch2);
     return{x:x,y:y,v:r.v,rnd:r.round};
   });
@@ -997,7 +997,7 @@ function _renderCrashChart(){
   for(var gi=0;gi<=4;gi++){
     var gy=padT+ch2-(gi/4)*ch2;
     gridY+='<line x1="'+padL+'" y1="'+gy+'" x2="'+(padL+cw)+'" y2="'+gy+'"/>';
-    var lv=useLog?Math.exp(mnVal+(gi/4)*mxVal):mnVal+(gi/4)*(mxVal-mnVal);
+    var lv=useLog?Math.exp(mnVal+(gi/4)*range):mnVal+(gi/4)*range;
     yLabels.push({y:gy,label:lv<10?lv.toFixed(1)+'x':Math.round(lv)+'x'});
   }
   // SVG
