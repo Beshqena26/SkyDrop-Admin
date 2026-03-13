@@ -875,11 +875,22 @@ function switchTab(n){
 function _ls(k){try{var v=localStorage.getItem('skydrop_'+k);return v?JSON.parse(v):null}catch(e){return null}}
 function _esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
+// Shared: smooth SVG cubic bezier path from points
+function _smoothPath(pts){
+  if(pts.length<2)return'M'+pts[0].x+','+pts[0].y;
+  var d='M'+pts[0].x+','+pts[0].y;
+  for(var i=0;i<pts.length-1;i++){
+    var cx=(pts[i].x+pts[i+1].x)/2;
+    d+=' C'+cx+','+pts[i].y+' '+cx+','+pts[i+1].y+' '+pts[i+1].x+','+pts[i+1].y;
+  }
+  return d;
+}
+
 var _dashFilter='all';
 function setDashFilter(f){
   _dashFilter=f;
-  document.querySelectorAll('.tf-btn').forEach(function(b){b.classList.remove('active')});
-  var btn=document.querySelector('.tf-btn[data-tf="'+f+'"]');
+  document.querySelectorAll('#dashFilters .tf-btn').forEach(function(b){b.classList.remove('active')});
+  var btn=document.querySelector('#dashFilters .tf-btn[data-tf="'+f+'"]');
   if(btn)btn.classList.add('active');
   loadDashboard();
 }
@@ -981,16 +992,7 @@ function _renderCrashChart(){
     return{x:x,y:y,v:r.v,rnd:r.round};
   });
   function _vc(v){return v>=10?'#17c964':v>=5?'#006FEE':v>=2?'#f5a524':'#f31260'}
-  function _smooth(pts){
-    if(pts.length<2)return'M'+pts[0].x+','+pts[0].y;
-    var d='M'+pts[0].x+','+pts[0].y;
-    for(var i=0;i<pts.length-1;i++){
-      var cx=(pts[i].x+pts[i+1].x)/2;
-      d+=' C'+cx+','+pts[i].y+' '+cx+','+pts[i+1].y+' '+pts[i+1].x+','+pts[i+1].y;
-    }
-    return d;
-  }
-  var linePath=_smooth(pts);
+  var linePath=_smoothPath(pts);
   var areaPath=linePath+' L'+pts[pts.length-1].x+','+(padT+ch2)+' L'+pts[0].x+','+(padT+ch2)+' Z';
   // Grid lines + Y labels
   var gridY='';var yLabels=[];
@@ -1181,16 +1183,7 @@ function _renderDashboard(h,bh){
     return{x:x,y:y,v:v};
   });
   // Smooth path
-  function _pSmooth(pts){
-    if(pts.length<2)return'M'+pts[0].x+','+pts[0].y;
-    var d='M'+pts[0].x+','+pts[0].y;
-    for(var i=0;i<pts.length-1;i++){
-      var cx=(pts[i].x+pts[i+1].x)/2;
-      d+=' C'+cx+','+pts[i].y+' '+cx+','+pts[i+1].y+' '+pts[i+1].x+','+pts[i+1].y;
-    }
-    return d;
-  }
-  var pLine=_pSmooth(ppts);
+  var pLine=_smoothPath(ppts);
   // Split fill: positive area (above zero) and negative area (below zero)
   var posArea=pLine+' L'+ppts[ppts.length-1].x+','+zeroY+' L'+ppts[0].x+','+zeroY+' Z';
   // SVG
