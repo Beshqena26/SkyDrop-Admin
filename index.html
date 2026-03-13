@@ -209,17 +209,25 @@ tr:hover td{background:var(--default-100)}
 /* ─── Confirm Modal ─── */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);z-index:100;display:none;align-items:center;justify-content:center;animation:fadeIn .15s ease}
 .modal-overlay.show{display:flex}
-.modal-box{background:var(--content);border-radius:var(--radius-lg);padding:32px;max-width:420px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid var(--divider);animation:modalIn .2s ease}
+.modal-box{background:var(--content);border-radius:var(--radius-lg);padding:32px;max-width:440px;width:90%;box-shadow:0 20px 60px rgba(0,0,0,.5);border:1px solid var(--divider);animation:modalIn .2s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(8px)}to{opacity:1;transform:scale(1) translateY(0)}}
 .modal-icon{width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px;font-size:24px}
 .modal-icon.danger{background:var(--danger-50);color:var(--danger)}
 .modal-icon.warning{background:var(--warning-50);color:var(--warning)}
+.modal-icon.info{background:var(--primary-50);color:var(--primary)}
 .modal-title{font-size:18px;font-weight:700;color:var(--foreground);margin-bottom:8px}
 .modal-desc{font-size:13px;color:var(--foreground-500);line-height:1.6;margin-bottom:12px}
+.modal-body{margin-bottom:16px}
 .modal-warn{font-size:12px;color:var(--danger);background:var(--danger-50);padding:10px 14px;border-radius:var(--radius-sm);margin-bottom:20px;line-height:1.5;display:none}
 .modal-warn.show{display:block}
 .modal-actions{display:flex;gap:10px;justify-content:flex-end}
+.time-range-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.time-range-opt{padding:10px 8px;border:1px solid var(--default-200);border-radius:var(--radius-sm);background:transparent;color:var(--foreground-500);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.time-range-opt:hover{border-color:var(--primary);color:var(--foreground)}
+.time-range-opt.active{background:var(--primary-50);border-color:var(--primary);color:var(--primary)}
+.time-range-opt .tr-label{display:block;font-size:13px;font-weight:700;margin-bottom:2px}
+.time-range-opt .tr-sub{display:block;font-size:10px;color:var(--foreground-400);font-weight:400}
 
 /* ─── Scrollbar ─── */
 ::-webkit-scrollbar{width:6px;height:6px}
@@ -435,6 +443,7 @@ tr:hover td{background:var(--default-100)}
     <div class="modal-icon" id="modalIcon"></div>
     <div class="modal-title" id="modalTitle"></div>
     <div class="modal-desc" id="modalDesc"></div>
+    <div class="modal-body" id="modalBody"></div>
     <div class="modal-warn" id="modalWarn"></div>
     <div class="modal-actions">
       <button class="btn btn-flat" id="modalCancel" onclick="closeModal()">Cancel</button>
@@ -496,10 +505,12 @@ function showModal(opts){
   if(ic){ic.className='modal-icon '+(opts.icon||'danger');ic.textContent=opts.emoji||'\u26A0\uFE0F'}
   var tEl=document.getElementById('modalTitle');if(tEl)tEl.textContent=opts.title||'Are you sure?';
   var dEl=document.getElementById('modalDesc');if(dEl)dEl.textContent=opts.desc||'';
+  var bd=document.getElementById('modalBody');
+  if(bd){if(opts.body){bd.innerHTML=opts.body;bd.style.display=''}else{bd.innerHTML='';bd.style.display='none'}}
   var w=document.getElementById('modalWarn');
   if(w){if(opts.warn){w.textContent=opts.warn;w.classList.add('show')}else{w.classList.remove('show')}}
   var cb=document.getElementById('modalConfirm');
-  if(cb){cb.textContent=opts.btn||'Confirm';cb.onclick=function(){closeModal();if(opts.onConfirm)opts.onConfirm()}}
+  if(cb){cb.textContent=opts.btn||'Confirm';cb.className='btn '+(opts.btnClass||'btn-danger');cb.onclick=function(){closeModal();if(opts.onConfirm)opts.onConfirm()}}
   m.classList.add('show');
   m.onclick=function(e){if(e.target===m)closeModal()};
   document.addEventListener('keydown',_modalEsc);
@@ -510,28 +521,50 @@ function closeModal(){
   document.removeEventListener('keydown',_modalEsc);
 }
 
+var _clearTimeRange='all';
+function _selectTimeRange(val){
+  _clearTimeRange=val;
+  document.querySelectorAll('.time-range-opt').forEach(function(b){b.classList.toggle('active',b.getAttribute('data-range')===val)});
+}
 function clearRoundData(){
+  _clearTimeRange='all';
   showModal({
     icon:'danger',emoji:'\uD83D\uDDD1\uFE0F',
-    title:'Clear Round History',
-    desc:'This will delete all round history, bet data, and live bets from both this device and Firebase.',
-    warn:'All dashboard stats and charts will be reset to zero. This cannot be undone.',
-    btn:'Delete All Data',
+    title:'Clear Round Data',
+    desc:'Choose how much data to delete:',
+    body:'<div class="time-range-grid">'+
+      '<button class="time-range-opt" data-range="1h" onclick="_selectTimeRange(\'1h\')"><span class="tr-label">1 Hour</span><span class="tr-sub">Last 60 min</span></button>'+
+      '<button class="time-range-opt" data-range="6h" onclick="_selectTimeRange(\'6h\')"><span class="tr-label">6 Hours</span><span class="tr-sub">Last 6 hrs</span></button>'+
+      '<button class="time-range-opt" data-range="12h" onclick="_selectTimeRange(\'12h\')"><span class="tr-label">12 Hours</span><span class="tr-sub">Last 12 hrs</span></button>'+
+      '<button class="time-range-opt" data-range="24h" onclick="_selectTimeRange(\'24h\')"><span class="tr-label">24 Hours</span><span class="tr-sub">Last day</span></button>'+
+      '<button class="time-range-opt" data-range="7d" onclick="_selectTimeRange(\'7d\')"><span class="tr-label">7 Days</span><span class="tr-sub">Last week</span></button>'+
+      '<button class="time-range-opt active" data-range="all" onclick="_selectTimeRange(\'all\')"><span class="tr-label">All Data</span><span class="tr-sub">Everything</span></button>'+
+    '</div>',
+    warn:'This cannot be undone. Selected data will be permanently deleted.',
+    btn:'Delete Selected Data',
     onConfirm:function(){
-      localStorage.removeItem('skydrop_history');
-      localStorage.removeItem('skydrop_betHistory');
+      var cutoff=0;
+      var now=Date.now();
+      if(_clearTimeRange==='1h')cutoff=now-3600000;
+      else if(_clearTimeRange==='6h')cutoff=now-21600000;
+      else if(_clearTimeRange==='12h')cutoff=now-43200000;
+      else if(_clearTimeRange==='24h')cutoff=now-86400000;
+      else if(_clearTimeRange==='7d')cutoff=now-604800000;
       if(typeof FB!=='undefined'&&FB.isOnline()){
-        FB.factoryReset().then(function(){
-          toast('All round data cleared (local + cloud)');
+        FB.clearRoundsByTime(cutoff).then(function(count){
+          if(count===-1)toast('All round data cleared');
+          else toast(count+' rounds deleted from Firebase');
           loadDashboard();loadRoundHistory();
         }).catch(function(){
-          toast('Local cleared, Firebase failed — check permissions');
+          toast('Firebase clear failed — check permissions');
           loadDashboard();loadRoundHistory();
         });
-      }else{
-        toast('Round data cleared (local only)');
-        loadDashboard();loadRoundHistory();
       }
+      if(_clearTimeRange==='all'){
+        localStorage.removeItem('skydrop_history');
+        localStorage.removeItem('skydrop_betHistory');
+      }
+      if(!FB.isOnline()){toast('Local data cleared');loadDashboard();loadRoundHistory()}
     }
   });
 }

@@ -143,6 +143,23 @@ var FB = (function() {
     });
   }
 
+  // ─── CLEAR ROUNDS BY TIME ───
+  // cutoffTs: timestamp — delete rounds with ts <= cutoffTs
+  // If cutoffTs is 0, delete ALL rounds
+  function clearRoundsByTime(cutoffTs) {
+    if (!_db) return Promise.resolve(0);
+    if (cutoffTs === 0) {
+      return _db.ref('rounds').remove().then(function() { return -1; });
+    }
+    return _db.ref('rounds').orderByChild('ts').endAt(cutoffTs).once('value').then(function(snap) {
+      var count = 0;
+      var updates = {};
+      snap.forEach(function(child) { updates[child.key] = null; count++; });
+      if (count === 0) return 0;
+      return _db.ref('rounds').update(updates).then(function() { return count; });
+    });
+  }
+
   // ─── FACTORY RESET ───
   function factoryReset() {
     if (!_db) return Promise.resolve();
@@ -166,6 +183,7 @@ var FB = (function() {
     loadRounds: loadRounds,
     onNewRound: onNewRound,
     makeAdmin: makeAdmin,
+    clearRoundsByTime: clearRoundsByTime,
     factoryReset: factoryReset
   };
 })();
