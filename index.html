@@ -319,10 +319,14 @@ tr.rh-detail td{padding:0 16px 14px;border-top:none;background:rgba(0,111,238,.0
 .rh-expand-icon{display:inline-block;transition:transform .2s;font-size:10px;color:var(--foreground-400);width:16px;text-align:center}
 tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
 
-/* ─── Round History: Load More ─── */
-.rh-load-more{text-align:center;padding:16px}
-.rh-load-more button{padding:8px 28px}
-.rh-showing{font-size:11px;color:var(--foreground-400);text-align:center;padding:8px 0;font-weight:500}
+/* ─── Round History: Pagination ─── */
+.rh-pagination{display:flex;align-items:center;justify-content:center;gap:4px;padding:16px 0}
+.rh-pg-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--foreground-400);font-family:inherit;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s}
+.rh-pg-btn:hover{background:var(--default-100);color:var(--foreground)}
+.rh-pg-btn.active{background:var(--primary);color:#fff;box-shadow:var(--shadow-sm)}
+.rh-pg-btn:disabled{opacity:.3;cursor:default;pointer-events:none}
+.rh-pg-dots{color:var(--foreground-400);font-size:12px;padding:0 2px;letter-spacing:1px}
+.rh-showing{font-size:11px;color:var(--foreground-400);text-align:center;padding:4px 0 0;font-weight:500}
 
 /* ─── Round History: Empty State ─── */
 .rh-empty{text-align:center;padding:60px 20px}
@@ -597,8 +601,8 @@ tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
         </table>
       </div>
     </div>
+    <div class="rh-pagination" id="rhPagination"></div>
     <div class="rh-showing" id="rhShowing"></div>
-    <div class="rh-load-more" id="rhLoadMore" style="display:none"><button class="btn btn-flat btn-sm" onclick="_rhLoadMore()">Load More</button></div>
 
     <!-- Empty State -->
     <div class="rh-empty" id="roundEmpty" style="display:none">
@@ -1089,8 +1093,8 @@ function _renderDashboard(h,bh){
 var _rhFilter='all';
 var _rhAllRounds=[];
 var _rhDisplayed=[];
-var _rhPage=50;
-var _rhShown=0;
+var _rhPage=16;
+var _rhCurrentPage=1;
 var _rhSortKey='';
 var _rhSortDir='desc';
 
@@ -1157,9 +1161,9 @@ function _rhProcessAndRender(){
     });
   }
 
-  _rhShown=0;
+  _rhCurrentPage=1;
   _renderRhStats();
-  _renderRhTable(true);
+  _renderRhTable();
 }
 
 function _renderRhStats(){
@@ -1179,22 +1183,24 @@ function _renderRhStats(){
     '<div class="rh-stat"><div class="rh-stat-val red">'+(minV===Infinity?'—':minV.toFixed(2)+'x')+'</div><div class="rh-stat-name">Lowest</div></div>';
 }
 
-function _renderRhTable(reset){
+function _renderRhTable(){
   var bd=document.getElementById('roundHistBody'),wr=document.getElementById('roundHistWrap'),em=document.getElementById('roundEmpty');
-  var lmEl=document.getElementById('rhLoadMore'),shEl=document.getElementById('rhShowing');
+  var pgEl=document.getElementById('rhPagination'),shEl=document.getElementById('rhShowing');
   var _rcl=document.getElementById('roundCountLabel');
   if(_rcl)_rcl.textContent=_rhDisplayed.length+' rounds';
   if(!bd||!wr||!em)return;
-  if(!_rhDisplayed.length){bd.innerHTML='';wr.style.display='none';em.style.display='block';if(lmEl)lmEl.style.display='none';if(shEl)shEl.textContent='';document.getElementById('rhStats').innerHTML='';return}
+  if(!_rhDisplayed.length){bd.innerHTML='';wr.style.display='none';em.style.display='block';if(pgEl)pgEl.innerHTML='';if(shEl)shEl.textContent='';document.getElementById('rhStats').innerHTML='';return}
   wr.style.display='block';em.style.display='none';
 
-  if(reset)_rhShown=0;
-  var end=Math.min(_rhShown+_rhPage,_rhDisplayed.length);
-  var slice=_rhDisplayed.slice(_rhShown,end);
+  var totalPages=Math.ceil(_rhDisplayed.length/_rhPage);
+  if(_rhCurrentPage>totalPages)_rhCurrentPage=totalPages;
+  var start=(_rhCurrentPage-1)*_rhPage;
+  var end=Math.min(start+_rhPage,_rhDisplayed.length);
+  var slice=_rhDisplayed.slice(start,end);
 
   var o='';
   slice.forEach(function(r,i){
-    var idx=_rhShown+i;
+    var idx=start+i;
     var c=r._rv>=5?'badge-success':r._rv>=1.5?'badge-warning':'badge-danger';
     var rs=r._profit>=0?'+$'+r._profit.toFixed(2):'-$'+Math.abs(r._profit).toFixed(2);
     var rc=r._profit>0?'pnl-pos':r._profit<0?'pnl-neg':'pnl-zero';
@@ -1209,12 +1215,10 @@ function _renderRhTable(reset){
     o+='<td class="'+rc+'">'+rs+'</td>';
     o+='<td style="color:var(--foreground-400);font-size:12px" title="'+fullTime+'">'+relTime+'</td>';
     o+='</tr>';
-    // Detail row (hidden)
     o+='<tr class="rh-detail" id="rhDetail'+idx+'"><td colspan="7">';
     if(r._betArr.length){
       o+='<div class="rh-bets-wrap">';
       r._betArr.forEach(function(b){
-        var bc=b.win>0?'green':'red';
         o+='<div class="rh-bet-row">';
         o+='<span class="rh-bet-uid">'+(b.uid?_esc(b.uid.substring(0,8))+'...':'Anon')+'</span>';
         o+='<span class="rh-bet-amount">Bet $'+(b.bet||0).toFixed(2)+'</span>';
@@ -1226,17 +1230,46 @@ function _renderRhTable(reset){
     }else{o+='<div class="rh-no-bets">No bet details available for this round</div>'}
     o+='</td></tr>';
   });
+  bd.innerHTML=o;
 
-  if(reset){bd.innerHTML=o}else{bd.insertAdjacentHTML('beforeend',o)}
-  _rhShown=end;
-
-  // Show/hide load more
-  var hasMore=_rhShown<_rhDisplayed.length;
-  if(lmEl)lmEl.style.display=hasMore?'block':'none';
-  if(shEl)shEl.textContent='Showing '+_rhShown+' of '+_rhDisplayed.length+' rounds';
+  // Pagination
+  if(pgEl){
+    if(totalPages<=1){pgEl.innerHTML=''}
+    else{
+      var pg='';
+      pg+='<button class="rh-pg-btn" onclick="_rhGoPage('+(_rhCurrentPage-1)+')"'+(  _rhCurrentPage<=1?' disabled':'')+'>&#9664;</button>';
+      var pages=_paginationRange(_rhCurrentPage,totalPages);
+      pages.forEach(function(p){
+        if(p==='...'){pg+='<span class="rh-pg-dots">...</span>'}
+        else{pg+='<button class="rh-pg-btn'+(p===_rhCurrentPage?' active':'')+'" onclick="_rhGoPage('+p+')">'+p+'</button>'}
+      });
+      pg+='<button class="rh-pg-btn" onclick="_rhGoPage('+(_rhCurrentPage+1)+')"'+(_rhCurrentPage>=totalPages?' disabled':'')+'>&#9654;</button>';
+      pgEl.innerHTML=pg;
+    }
+  }
+  if(shEl)shEl.textContent='Showing '+(start+1)+'–'+end+' of '+_rhDisplayed.length+' rounds';
 }
 
-function _rhLoadMore(){_renderRhTable(false)}
+function _paginationRange(current,total){
+  if(total<=7)return Array.from({length:total},function(_,i){return i+1});
+  var pages=[];
+  pages.push(1);
+  if(current>3)pages.push('...');
+  var s=Math.max(2,current-1),e=Math.min(total-1,current+1);
+  for(var i=s;i<=e;i++)pages.push(i);
+  if(current<total-2)pages.push('...');
+  pages.push(total);
+  return pages;
+}
+
+function _rhGoPage(p){
+  var totalPages=Math.ceil(_rhDisplayed.length/_rhPage);
+  if(p<1||p>totalPages)return;
+  _rhCurrentPage=p;
+  _renderRhTable();
+  var wr=document.getElementById('roundHistWrap');
+  if(wr)wr.scrollIntoView({behavior:'smooth',block:'start'});
+}
 
 function _rhToggleRow(idx){
   var row=document.querySelector('tr.rh-row[data-ri="'+idx+'"]');
