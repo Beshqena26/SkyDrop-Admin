@@ -280,6 +280,59 @@ tr:hover td{background:var(--default-100)}
 .danger-zone{margin-top:32px;padding:20px;border:1px solid rgba(243,18,96,.2);border-radius:var(--radius-md);background:rgba(243,18,96,.04)}
 .danger-zone-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:12px;display:flex;align-items:center;gap:8px}
 .danger-zone-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+/* ─── Round History: Summary Stats ─── */
+.rh-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.rh-stat{background:var(--content);border-radius:var(--radius-md);padding:14px 16px;display:flex;flex-direction:column;gap:2px}
+.rh-stat-val{font-size:20px;font-weight:800;letter-spacing:-.03em;color:var(--foreground);font-variant-numeric:tabular-nums}
+.rh-stat-name{font-size:10px;font-weight:600;color:var(--foreground-400);text-transform:uppercase;letter-spacing:.5px}
+
+/* ─── Round History: Toolbar ─── */
+.rh-toolbar{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.rh-search{display:flex;align-items:center;gap:0;background:var(--default-100);border-radius:var(--radius-sm);border:2px solid transparent;transition:border-color .2s;overflow:hidden}
+.rh-search:focus-within{border-color:var(--focus)}
+.rh-search-icon{padding:0 8px 0 12px;color:var(--foreground-400);font-size:14px;flex-shrink:0;display:flex;align-items:center}
+.rh-search-icon svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.rh-search input{border:none;background:transparent;color:var(--foreground);font-family:inherit;font-size:12px;padding:7px 12px 7px 0;outline:none;width:140px}
+.rh-search input::placeholder{color:var(--foreground-400)}
+
+/* ─── Round History: Sort Headers ─── */
+th.sortable{cursor:pointer;user-select:none;transition:color .15s}
+th.sortable:hover{color:var(--foreground)}
+th.sortable::after{content:'';display:inline-block;width:0;height:0;margin-left:6px;vertical-align:middle;opacity:.4;transition:opacity .15s}
+th.sort-asc::after{border-left:4px solid transparent;border-right:4px solid transparent;border-bottom:5px solid currentColor;opacity:.9}
+th.sort-desc::after{border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;opacity:.9}
+
+/* ─── Round History: Expandable Rows ─── */
+tr.rh-row{cursor:pointer;transition:background .15s}
+tr.rh-row:hover td{background:var(--default-100)}
+tr.rh-row.expanded td{background:rgba(0,111,238,.06);border-bottom-color:transparent}
+tr.rh-detail{display:none}
+tr.rh-detail.show{display:table-row}
+tr.rh-detail td{padding:0 16px 14px;border-top:none;background:rgba(0,111,238,.03)}
+.rh-bets-wrap{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.rh-bet-row{display:flex;align-items:center;gap:12px;padding:6px 12px;border-radius:var(--radius-sm);background:var(--default-100);font-size:12px}
+.rh-bet-uid{color:var(--foreground-400);font-family:monospace;font-size:11px;flex-shrink:0;max-width:80px;overflow:hidden;text-overflow:ellipsis}
+.rh-bet-amount{font-weight:600;color:var(--foreground)}
+.rh-bet-cash{font-weight:700;margin-left:auto}
+.rh-no-bets{font-size:12px;color:var(--foreground-400);padding:6px 0;font-style:italic}
+.rh-expand-icon{display:inline-block;transition:transform .2s;font-size:10px;color:var(--foreground-400);width:16px;text-align:center}
+tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
+
+/* ─── Round History: Load More ─── */
+.rh-load-more{text-align:center;padding:16px}
+.rh-load-more button{padding:8px 28px}
+.rh-showing{font-size:11px;color:var(--foreground-400);text-align:center;padding:8px 0;font-weight:500}
+
+/* ─── Round History: Empty State ─── */
+.rh-empty{text-align:center;padding:60px 20px}
+.rh-empty-icon{font-size:48px;margin-bottom:12px;opacity:.5}
+.rh-empty-title{font-size:16px;font-weight:700;color:var(--foreground);margin-bottom:6px}
+.rh-empty-desc{font-size:13px;color:var(--foreground-400)}
+
+/* ─── Round History: Export Btn ─── */
+.btn-outline{background:transparent;border:1.5px solid var(--default-200);color:var(--foreground-500);padding:7px 14px;font-size:12px;border-radius:var(--radius-sm)}
+.btn-outline:hover{border-color:var(--default-300);color:var(--foreground);background:var(--default-100)}
 </style>
 </head>
 <body>
@@ -501,18 +554,58 @@ tr:hover td{background:var(--default-100)}
     <div class="sec-bar">
       <div class="sec-title">Round History</div>
       <div class="sec-right">
-        <span class="count-chip" id="roundCountLabel">0 rounds</span>
+        <div class="time-filters" id="rhFilters">
+          <button class="tf-btn" data-rhf="1h" onclick="setRhFilter('1h')">1H</button>
+          <button class="tf-btn" data-rhf="6h" onclick="setRhFilter('6h')">6H</button>
+          <button class="tf-btn" data-rhf="24h" onclick="setRhFilter('24h')">24H</button>
+          <button class="tf-btn" data-rhf="7d" onclick="setRhFilter('7d')">1W</button>
+          <button class="tf-btn active" data-rhf="all" onclick="setRhFilter('all')">All</button>
+        </div>
         <button class="btn btn-flat btn-sm" onclick="loadRoundHistory()">Refresh</button>
         <button class="btn btn-danger btn-sm" onclick="clearRoundData()">Clear Data</button>
       </div>
     </div>
+
+    <!-- Summary Stats -->
+    <div class="rh-stats" id="rhStats"></div>
+
+    <!-- Toolbar: search + count + export -->
+    <div class="rh-toolbar">
+      <div class="rh-search">
+        <span class="rh-search-icon"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg></span>
+        <input type="text" id="rhSearchInput" placeholder="Search round #..." oninput="_rhSearch()">
+      </div>
+      <span class="count-chip" id="roundCountLabel">0 rounds</span>
+      <div style="flex:1"></div>
+      <button class="btn btn-outline btn-sm" onclick="exportCSV()">Export CSV</button>
+    </div>
+
+    <!-- Table -->
     <div class="table-wrap" id="roundHistWrap">
       <div class="table-scroll">
-        <table><thead><tr><th>#</th><th>Crash</th><th>Players</th><th>Total Bet</th><th>House P/L</th><th>Time</th></tr></thead>
-        <tbody id="roundHistBody"></tbody></table>
+        <table>
+          <thead><tr>
+            <th style="width:28px"></th>
+            <th class="sortable" data-sort="round" onclick="_rhSort('round')">#</th>
+            <th class="sortable" data-sort="crash" onclick="_rhSort('crash')">Crash</th>
+            <th class="sortable" data-sort="players" onclick="_rhSort('players')">Players</th>
+            <th class="sortable" data-sort="bet" onclick="_rhSort('bet')">Total Bet</th>
+            <th class="sortable" data-sort="pnl" onclick="_rhSort('pnl')">House P/L</th>
+            <th class="sortable" data-sort="time" onclick="_rhSort('time')">Time</th>
+          </tr></thead>
+          <tbody id="roundHistBody"></tbody>
+        </table>
       </div>
     </div>
-    <div class="empty-msg" id="roundEmpty" style="display:none">No round history yet. Play some rounds first.</div>
+    <div class="rh-showing" id="rhShowing"></div>
+    <div class="rh-load-more" id="rhLoadMore" style="display:none"><button class="btn btn-flat btn-sm" onclick="_rhLoadMore()">Load More</button></div>
+
+    <!-- Empty State -->
+    <div class="rh-empty" id="roundEmpty" style="display:none">
+      <div class="rh-empty-icon">&#128202;</div>
+      <div class="rh-empty-title">No rounds yet</div>
+      <div class="rh-empty-desc">Play some rounds in the game and they'll appear here.</div>
+    </div>
   </div>
 
 </div>
@@ -992,34 +1085,206 @@ function _renderDashboard(h,bh){
   }
 }
 
+// ── Round History State ──
+var _rhFilter='all';
+var _rhAllRounds=[];
+var _rhDisplayed=[];
+var _rhPage=50;
+var _rhShown=0;
+var _rhSortKey='';
+var _rhSortDir='desc';
+
+function setRhFilter(f){
+  _rhFilter=f;
+  document.querySelectorAll('#rhFilters .tf-btn').forEach(function(b){b.classList.remove('active')});
+  var btn=document.querySelector('.tf-btn[data-rhf="'+f+'"]');
+  if(btn)btn.classList.add('active');
+  loadRoundHistory();
+}
+
 function loadRoundHistory(){
   if(typeof FB!=='undefined'&&FB.isOnline()){
-    FB.loadRounds().then(function(fbRounds){_renderRoundHistory(fbRounds.length?fbRounds:(_ls('history')||[]))});
-  }else{_renderRoundHistory(_ls('history')||[])}
+    FB.loadRounds().then(function(fbRounds){
+      var rounds=fbRounds.length?fbRounds:(_ls('history')||[]);
+      _rhAllRounds=_filterByTime(rounds,_rhFilter);
+      _rhProcessAndRender();
+    });
+  }else{
+    _rhAllRounds=_filterByTime(_ls('history')||[],_rhFilter);
+    _rhProcessAndRender();
+  }
 }
-function _renderRoundHistory(h){
-  var bd=document.getElementById('roundHistBody'),wr=document.getElementById('roundHistWrap'),em=document.getElementById('roundEmpty');
-  var _rcl=document.getElementById('roundCountLabel');if(_rcl)_rcl.textContent=h.length+' rounds';
-  if(!bd||!wr||!em)return;
-  if(!h.length){bd.innerHTML='';wr.style.display='none';em.style.display='block';return}
-  wr.style.display='block';em.style.display='none';
-  var o='';h.forEach(function(r){
-    var c=r.v>=5?'badge-success':r.v>=1.5?'badge-warning':'badge-danger';
-    // Calculate real house profit from embedded bets
-    var totalIn=0,totalOut=0;
+
+function _rhProcessAndRender(){
+  // Enrich each round with computed fields
+  _rhAllRounds.forEach(function(r){
+    if(r._enriched)return;
+    r._enriched=true;
+    var totalIn=0,totalOut=0,betArr=[];
     var bets=r.bets;
     if(bets){
       var arr=Array.isArray(bets)?bets:Object.keys(bets).map(function(k){return bets[k]});
-      arr.forEach(function(b){if(b){totalIn+=b.bet||0;totalOut+=b.win||0}});
-    } else {
-      totalIn=r.totalBet||0;
-    }
-    var houseProfit=totalIn-totalOut;
-    var rs=houseProfit>=0?'+$'+houseProfit.toFixed(2):'-$'+Math.abs(houseProfit).toFixed(2);
-    var rc=houseProfit>0?'pnl-pos':houseProfit<0?'pnl-neg':'pnl-zero';
-    var _rv=r.v;if(typeof _rv!=='number'||!isFinite(_rv))_rv=0;
-    o+='<tr><td>#'+_esc(r.round)+'</td><td><span class="badge '+c+'">'+_rv.toFixed(2)+'x</span></td><td>'+(parseInt(r.players)||0)+'</td><td>$'+totalIn.toFixed(2)+'</td><td class="'+rc+'">'+rs+'</td><td style="color:var(--foreground-400);font-size:12px">'+_esc(r.time)+'</td></tr>'});
-  bd.innerHTML=o;
+      arr.forEach(function(b){if(b){totalIn+=b.bet||0;totalOut+=b.win||0;betArr.push(b)}});
+    }else{totalIn=r.totalBet||0}
+    r._totalIn=totalIn;r._totalOut=totalOut;r._profit=totalIn-totalOut;r._betArr=betArr;
+    r._rv=(typeof r.v==='number'&&isFinite(r.v))?r.v:0;
+    r._players=parseInt(r.players)||0;
+    r._ts=r.ts||(r.time?new Date(r.time).getTime():0);
+  });
+
+  // Apply search filter
+  var sq=document.getElementById('rhSearchInput');
+  var query=sq?sq.value.trim():'';
+  if(query){
+    _rhDisplayed=_rhAllRounds.filter(function(r){return String(r.round).indexOf(query)!==-1});
+  }else{
+    _rhDisplayed=_rhAllRounds.slice();
+  }
+
+  // Apply sort
+  if(_rhSortKey){
+    var dir=_rhSortDir==='asc'?1:-1;
+    _rhDisplayed.sort(function(a,b){
+      var va,vb;
+      if(_rhSortKey==='round'){va=a.round||0;vb=b.round||0}
+      else if(_rhSortKey==='crash'){va=a._rv;vb=b._rv}
+      else if(_rhSortKey==='players'){va=a._players;vb=b._players}
+      else if(_rhSortKey==='bet'){va=a._totalIn;vb=b._totalIn}
+      else if(_rhSortKey==='pnl'){va=a._profit;vb=b._profit}
+      else if(_rhSortKey==='time'){va=a._ts;vb=b._ts}
+      else{va=0;vb=0}
+      return va<vb?-dir:va>vb?dir:0;
+    });
+  }
+
+  _rhShown=0;
+  _renderRhStats();
+  _renderRhTable(true);
+}
+
+function _renderRhStats(){
+  var h=_rhDisplayed;
+  var el=document.getElementById('rhStats');if(!el)return;
+  if(!h.length){el.innerHTML='';return}
+  var totalIn=0,totalOut=0,sumV=0,maxV=0,minV=Infinity;
+  h.forEach(function(r){totalIn+=r._totalIn;totalOut+=r._totalOut;sumV+=r._rv;if(r._rv>maxV)maxV=r._rv;if(r._rv<minV)minV=r._rv});
+  var profit=totalIn-totalOut;
+  var avg=h.length?sumV/h.length:0;
+  el.innerHTML=
+    '<div class="rh-stat"><div class="rh-stat-val cyan">'+h.length+'</div><div class="rh-stat-name">Rounds</div></div>'+
+    '<div class="rh-stat"><div class="rh-stat-val">$'+totalIn.toFixed(2)+'</div><div class="rh-stat-name">Total Wagered</div></div>'+
+    '<div class="rh-stat"><div class="rh-stat-val '+(profit>=0?'green':'red')+'">$'+profit.toFixed(2)+'</div><div class="rh-stat-name">House Profit</div></div>'+
+    '<div class="rh-stat"><div class="rh-stat-val cyan">'+avg.toFixed(2)+'x</div><div class="rh-stat-name">Avg Crash</div></div>'+
+    '<div class="rh-stat"><div class="rh-stat-val green">'+maxV.toFixed(2)+'x</div><div class="rh-stat-name">Highest</div></div>'+
+    '<div class="rh-stat"><div class="rh-stat-val red">'+(minV===Infinity?'—':minV.toFixed(2)+'x')+'</div><div class="rh-stat-name">Lowest</div></div>';
+}
+
+function _renderRhTable(reset){
+  var bd=document.getElementById('roundHistBody'),wr=document.getElementById('roundHistWrap'),em=document.getElementById('roundEmpty');
+  var lmEl=document.getElementById('rhLoadMore'),shEl=document.getElementById('rhShowing');
+  var _rcl=document.getElementById('roundCountLabel');
+  if(_rcl)_rcl.textContent=_rhDisplayed.length+' rounds';
+  if(!bd||!wr||!em)return;
+  if(!_rhDisplayed.length){bd.innerHTML='';wr.style.display='none';em.style.display='block';if(lmEl)lmEl.style.display='none';if(shEl)shEl.textContent='';document.getElementById('rhStats').innerHTML='';return}
+  wr.style.display='block';em.style.display='none';
+
+  if(reset)_rhShown=0;
+  var end=Math.min(_rhShown+_rhPage,_rhDisplayed.length);
+  var slice=_rhDisplayed.slice(_rhShown,end);
+
+  var o='';
+  slice.forEach(function(r,i){
+    var idx=_rhShown+i;
+    var c=r._rv>=5?'badge-success':r._rv>=1.5?'badge-warning':'badge-danger';
+    var rs=r._profit>=0?'+$'+r._profit.toFixed(2):'-$'+Math.abs(r._profit).toFixed(2);
+    var rc=r._profit>0?'pnl-pos':r._profit<0?'pnl-neg':'pnl-zero';
+    var relTime=_relativeTime(r._ts);
+    var fullTime=_esc(r.time||new Date(r._ts).toLocaleString());
+    o+='<tr class="rh-row" data-ri="'+idx+'" onclick="_rhToggleRow('+idx+')">';
+    o+='<td><span class="rh-expand-icon">&#9654;</span></td>';
+    o+='<td>#'+_esc(r.round)+'</td>';
+    o+='<td><span class="badge '+c+'">'+r._rv.toFixed(2)+'x</span></td>';
+    o+='<td>'+r._players+'</td>';
+    o+='<td>$'+r._totalIn.toFixed(2)+'</td>';
+    o+='<td class="'+rc+'">'+rs+'</td>';
+    o+='<td style="color:var(--foreground-400);font-size:12px" title="'+fullTime+'">'+relTime+'</td>';
+    o+='</tr>';
+    // Detail row (hidden)
+    o+='<tr class="rh-detail" id="rhDetail'+idx+'"><td colspan="7">';
+    if(r._betArr.length){
+      o+='<div class="rh-bets-wrap">';
+      r._betArr.forEach(function(b){
+        var bc=b.win>0?'green':'red';
+        o+='<div class="rh-bet-row">';
+        o+='<span class="rh-bet-uid">'+(b.uid?_esc(b.uid.substring(0,8))+'...':'Anon')+'</span>';
+        o+='<span class="rh-bet-amount">Bet $'+(b.bet||0).toFixed(2)+'</span>';
+        if(b.win>0){o+='<span class="rh-bet-cash" style="color:var(--success)">Won $'+b.win.toFixed(2)+' @ '+(b.cashMult||0).toFixed(2)+'x</span>'}
+        else{o+='<span class="rh-bet-cash" style="color:var(--danger)">Lost</span>'}
+        o+='</div>';
+      });
+      o+='</div>';
+    }else{o+='<div class="rh-no-bets">No bet details available for this round</div>'}
+    o+='</td></tr>';
+  });
+
+  if(reset){bd.innerHTML=o}else{bd.insertAdjacentHTML('beforeend',o)}
+  _rhShown=end;
+
+  // Show/hide load more
+  var hasMore=_rhShown<_rhDisplayed.length;
+  if(lmEl)lmEl.style.display=hasMore?'block':'none';
+  if(shEl)shEl.textContent='Showing '+_rhShown+' of '+_rhDisplayed.length+' rounds';
+}
+
+function _rhLoadMore(){_renderRhTable(false)}
+
+function _rhToggleRow(idx){
+  var row=document.querySelector('tr.rh-row[data-ri="'+idx+'"]');
+  var detail=document.getElementById('rhDetail'+idx);
+  if(!row||!detail)return;
+  var isOpen=row.classList.contains('expanded');
+  row.classList.toggle('expanded',!isOpen);
+  detail.classList.toggle('show',!isOpen);
+}
+
+function _rhSearch(){
+  _rhProcessAndRender();
+}
+
+function _rhSort(key){
+  // Update header styles
+  document.querySelectorAll('th.sortable').forEach(function(th){th.classList.remove('sort-asc','sort-desc')});
+  if(_rhSortKey===key){_rhSortDir=_rhSortDir==='desc'?'asc':'desc'}
+  else{_rhSortKey=key;_rhSortDir='desc'}
+  var th=document.querySelector('th[data-sort="'+key+'"]');
+  if(th)th.classList.add('sort-'+_rhSortDir);
+  _rhProcessAndRender();
+}
+
+function _relativeTime(ts){
+  if(!ts)return'—';
+  var diff=Date.now()-ts;
+  if(diff<0)return'just now';
+  if(diff<60000)return Math.floor(diff/1000)+'s ago';
+  if(diff<3600000)return Math.floor(diff/60000)+'m ago';
+  if(diff<86400000)return Math.floor(diff/3600000)+'h ago';
+  if(diff<604800000)return Math.floor(diff/86400000)+'d ago';
+  return new Date(ts).toLocaleDateString();
+}
+
+function exportCSV(){
+  if(!_rhDisplayed.length){toast('No data to export');return}
+  var rows=['Round,Crash,Players,Total Bet,House P/L,Time'];
+  _rhDisplayed.forEach(function(r){
+    rows.push([r.round,r._rv.toFixed(2),r._players,r._totalIn.toFixed(2),r._profit.toFixed(2),'"'+(r.time||new Date(r._ts).toLocaleString())+'"'].join(','));
+  });
+  var blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  a.href=url;a.download='skydrop_rounds_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('CSV exported');
 }
 
 window.addEventListener('storage',function(e){
