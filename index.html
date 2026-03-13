@@ -824,11 +824,13 @@ function loadDashboard(){
     FB.loadRounds().then(function(fbRounds){
       var rounds=fbRounds.length?fbRounds:(_ls('history')||[]);
       rounds=_filterByTime(rounds,_dashFilter);
-      // Extract all bets from Firebase rounds
+      // Extract all bets from Firebase rounds (handle both arrays and Firebase objects)
       var allBets=[];
       rounds.forEach(function(r){
-        if(r.bets&&r.bets.length){
-          r.bets.forEach(function(b){allBets.push({bet:b.bet||0,win:b.win||0,mult:b.cashMult||0})});
+        var bets=r.bets;
+        if(bets){
+          var arr=Array.isArray(bets)?bets:Object.keys(bets).map(function(k){return bets[k]});
+          arr.forEach(function(b){if(b)allBets.push({bet:b.bet||0,win:b.win||0,mult:b.cashMult||0})});
         }
       });
       // If no embedded bets, fall back to localStorage
@@ -856,6 +858,9 @@ function _renderDashboard(h,bh){
         if(b.win>0){won+=b.win;w++;if((b.cashMult||0)>bestC)bestC=b.cashMult}else{l++}
         if(b.uid)uniqueUids[b.uid]=true;
       });
+    }else if(r.totalBet){
+      // No embedded bets — use round-level totalBet
+      tw+=r.totalBet;
     }
   });
   // Fallback to bh array if no embedded bets
