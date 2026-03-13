@@ -232,7 +232,7 @@ tr:hover td{background:var(--default-100)}
 <!-- ─── Navbar ─── -->
 <nav class="navbar">
   <div class="navbar-brand">SkyDrop II <span>Admin Panel</span></div>
-  <a href="index.html" class="nav-link">
+  <a href="https://beshqena26.github.io/SkyDrop/" class="nav-link" target="_blank">
     <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
     Back to Game
   </a>
@@ -482,8 +482,8 @@ function clearAll(){
     btn:'Reset Everything',
     onConfirm:function(){
       var k=[];for(var i=0;i<localStorage.length;i++){var x=localStorage.key(i);if(x&&x.startsWith('skydrop_'))k.push(x)};k.forEach(function(x){localStorage.removeItem(x)});
-      if(typeof FB!=='undefined'&&FB.isOnline()){FB.factoryReset().then(function(){toast('Factory reset done (local + cloud)')}).catch(function(){toast('Factory reset done (local only)')})}
-      else{toast('Factory reset done')}
+      if(typeof FB!=='undefined'&&FB.isOnline()){FB.factoryReset().then(function(){toast('Factory reset done (local + cloud)');resetToPreset();loadDashboard();loadRoundHistory()}).catch(function(){toast('Factory reset done (local only)');resetToPreset();loadDashboard();loadRoundHistory()})}
+      else{toast('Factory reset done');resetToPreset();loadDashboard();loadRoundHistory()}
     }
   });
 }
@@ -521,11 +521,7 @@ function clearRoundData(){
       localStorage.removeItem('skydrop_history');
       localStorage.removeItem('skydrop_betHistory');
       if(typeof FB!=='undefined'&&FB.isOnline()){
-        var db=firebase.database();
-        Promise.all([
-          db.ref('rounds').remove(),
-          db.ref('liveBets').remove()
-        ]).then(function(){
+        FB.factoryReset().then(function(){
           toast('All round data cleared (local + cloud)');
           loadDashboard();loadRoundHistory();
         }).catch(function(){
@@ -548,6 +544,7 @@ function switchTab(n){
   if(n==='dashboard')loadDashboard();if(n==='rounds')loadRoundHistory();
 }
 function _ls(k){try{var v=localStorage.getItem('skydrop_'+k);return v?JSON.parse(v):null}catch(e){return null}}
+function _esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 var _dashFilter='all';
 function setDashFilter(f){
@@ -631,7 +628,7 @@ function _renderDashboard(h,bh){
     '<div class="stat-card"><div class="stat-value green">$'+won.toFixed(2)+'</div><div class="stat-name">Total Paid Out</div></div>'+
     '<div class="stat-card"><div class="stat-value '+(hp>=0?'green':'red')+'">$'+hp.toFixed(2)+'</div><div class="stat-name">House Profit</div></div>'+
     '<div class="stat-card"><div class="stat-value '+(wr>=50?'green':'red')+'">'+wr+'%</div><div class="stat-name">Player Win Rate</div></div>'+
-    '<div class="stat-card"><div class="stat-value gold">'+bestC.toFixed(2)+'x</div><div class="stat-name">Best Cashout</div></div>'+
+    '<div class="stat-card"><div class="stat-value gold">'+(bestC>0?bestC.toFixed(2)+'x':'N/A')+'</div><div class="stat-name">Best Cashout</div></div>'+
     '<div class="stat-card"><div class="stat-value cyan">'+avg.toFixed(2)+'x</div><div class="stat-name">Avg Crash</div></div>';
   // ── Crash Distribution Chart ──
   var bk=[
@@ -869,7 +866,8 @@ function _renderRoundHistory(h){
     var houseProfit=totalIn-totalOut;
     var rs=houseProfit>=0?'+$'+houseProfit.toFixed(2):'-$'+Math.abs(houseProfit).toFixed(2);
     var rc=houseProfit>0?'pnl-pos':houseProfit<0?'pnl-neg':'pnl-zero';
-    o+='<tr><td>#'+r.round+'</td><td><span class="badge '+c+'">'+r.v.toFixed(2)+'x</span></td><td>'+(r.players||0)+'</td><td>$'+totalIn.toFixed(2)+'</td><td class="'+rc+'">'+rs+'</td><td style="color:var(--foreground-400);font-size:12px">'+r.time+'</td></tr>'});
+    var _rv=r.v;if(typeof _rv!=='number'||!isFinite(_rv))_rv=0;
+    o+='<tr><td>#'+_esc(r.round)+'</td><td><span class="badge '+c+'">'+_rv.toFixed(2)+'x</span></td><td>'+(parseInt(r.players)||0)+'</td><td>$'+totalIn.toFixed(2)+'</td><td class="'+rc+'">'+rs+'</td><td style="color:var(--foreground-400);font-size:12px">'+_esc(r.time)+'</td></tr>'});
   bd.innerHTML=o;
 }
 
@@ -898,6 +896,11 @@ if(typeof FB!=='undefined'){
   FB.onReady(function(online){
     var st=document.getElementById('fbStatus');
     if(online){
+      if(!FB.isAdmin()){
+        st.textContent='Access Denied — Not Admin (run FB.makeAdmin() in console first)';st.style.display='block';st.style.background='#310413';st.style.color='#f31260';
+        document.querySelector('.main-container').style.opacity='0.3';document.querySelector('.main-container').style.pointerEvents='none';
+        return;
+      }
       st.textContent='Firebase Connected';st.style.display='block';st.style.background='#052814';st.style.color='#17c964';
       setTimeout(function(){st.style.display='none'},3000);
       // Load config from Firebase
