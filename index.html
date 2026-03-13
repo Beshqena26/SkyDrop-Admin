@@ -337,17 +337,58 @@ tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
 /* ─── Round History: Export Btn ─── */
 .btn-outline{background:transparent;border:1.5px solid var(--default-200);color:var(--foreground-500);padding:7px 14px;font-size:12px;border-radius:var(--radius-sm)}
 .btn-outline:hover{border-color:var(--default-300);color:var(--foreground);background:var(--default-100)}
+
+/* ─── Login Screen ─── */
+.login-overlay{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;align-items:center;justify-content:center;transition:opacity .3s}
+.login-overlay.hidden{opacity:0;pointer-events:none}
+.login-card{width:100%;max-width:380px;padding:40px 32px;background:var(--content);border-radius:var(--radius-lg);border:1px solid var(--divider);box-shadow:var(--shadow-lg);text-align:center}
+.login-logo{font-size:28px;font-weight:700;letter-spacing:-.03em;margin-bottom:4px}
+.login-sub{font-size:13px;color:var(--foreground-400);margin-bottom:32px}
+.login-input-wrap{position:relative;margin-bottom:16px}
+.login-input{width:100%;padding:12px 44px 12px 16px;background:var(--default-100);border:1.5px solid var(--default-200);border-radius:var(--radius-sm);color:var(--foreground);font-family:inherit;font-size:14px;outline:none;transition:border-color .2s}
+.login-input:focus{border-color:var(--primary)}
+.login-input.error{border-color:var(--danger);animation:shake .4s}
+.login-toggle{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--foreground-400);cursor:pointer;font-size:16px;padding:4px}
+.login-toggle:hover{color:var(--foreground)}
+.login-btn{width:100%;padding:12px;background:var(--primary);color:#fff;border:none;border-radius:var(--radius-sm);font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:opacity .2s}
+.login-btn:hover{opacity:.9}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{font-size:12px;color:var(--danger);margin-top:12px;min-height:18px}
+.login-spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.nav-logout{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--radius-md);font-size:12px;font-weight:500;color:var(--danger);background:var(--danger-50);border:none;cursor:pointer;font-family:inherit;transition:all .2s}
+.nav-logout:hover{opacity:.8}
 </style>
 </head>
 <body>
 
+<!-- ─── Login Overlay ─── -->
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">SkyDrop II</div>
+    <div class="login-sub">Admin Panel — Enter password to continue</div>
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="login-input-wrap">
+        <input type="password" class="login-input" id="loginPass" placeholder="Admin password" autocomplete="current-password" autofocus>
+        <button type="button" class="login-toggle" id="loginToggle" onclick="togglePassVis()" title="Show password">&#128065;</button>
+      </div>
+      <button type="submit" class="login-btn" id="loginBtn">Log In</button>
+      <div class="login-error" id="loginError"></div>
+    </form>
+  </div>
+</div>
+
 <!-- ─── Navbar ─── -->
 <nav class="navbar">
   <div class="navbar-brand">SkyDrop II <span>Admin Panel</span></div>
-  <a href="https://beshqena26.github.io/SkyDrop/" class="nav-link" target="_blank">
-    <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-    Back to Game
-  </a>
+  <div style="display:flex;align-items:center;gap:10px">
+    <a href="https://beshqena26.github.io/SkyDrop/" class="nav-link" target="_blank">
+      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back to Game
+    </a>
+    <button class="nav-logout" id="logoutBtn" onclick="handleLogout()" style="display:none">Logout</button>
+  </div>
 </nav>
 
 <div class="container">
@@ -1348,31 +1389,113 @@ function _initConfig(c){
   if(s){try{_initConfig(JSON.parse(s))}catch(e){}}
   _initDirtyTracking();
 })();
-// Then override from Firebase when ready
+
+// ─── LOGIN SYSTEM ───
+var ADMIN_PASS_HASH='c1b68308fe07ac9b1f850cc23e2b6b9845b9d29b78a6c4160b63fa2a75bc9c06';
+
+// SHA-256 hash using Web Crypto API
+function sha256(str){
+  var buf=new TextEncoder().encode(str);
+  return crypto.subtle.digest('SHA-256',buf).then(function(hash){
+    return Array.from(new Uint8Array(hash)).map(function(b){return b.toString(16).padStart(2,'0')}).join('');
+  });
+}
+
+function togglePassVis(){
+  var inp=document.getElementById('loginPass');
+  var tog=document.getElementById('loginToggle');
+  if(inp.type==='password'){inp.type='text';tog.innerHTML='&#128064;'}
+  else{inp.type='password';tog.innerHTML='&#128065;'}
+}
+
+function handleLogin(e){
+  e.preventDefault();
+  var pass=document.getElementById('loginPass').value;
+  var btn=document.getElementById('loginBtn');
+  var errEl=document.getElementById('loginError');
+  var inp=document.getElementById('loginPass');
+  if(!pass){errEl.textContent='Please enter a password';inp.classList.add('error');setTimeout(function(){inp.classList.remove('error')},500);return}
+  btn.disabled=true;btn.innerHTML='<span class="login-spinner"></span>Checking...';errEl.textContent='';
+
+  sha256(pass).then(function(hash){
+    // Check against Firebase-stored hash first, fallback to hardcoded
+    FB.getAdminPassHash().then(function(storedHash){
+      var correctHash=storedHash||ADMIN_PASS_HASH;
+      if(hash===correctHash){
+        // Correct password — register as admin
+        if(!storedHash){FB.setAdminPassHash(ADMIN_PASS_HASH)} // store hash in Firebase on first login
+        FB.makeAdmin().then(function(){
+          _onAdminGranted();
+        }).catch(function(){
+          errEl.textContent='Failed to register admin. Try again.';btn.disabled=false;btn.textContent='Log In';
+        });
+      }else{
+        errEl.textContent='Wrong password';inp.classList.add('error');inp.value='';inp.focus();
+        setTimeout(function(){inp.classList.remove('error')},500);
+        btn.disabled=false;btn.textContent='Log In';
+      }
+    }).catch(function(){
+      // Firebase read failed — try hardcoded hash
+      if(hash===ADMIN_PASS_HASH){
+        FB.makeAdmin().then(function(){_onAdminGranted()}).catch(function(){
+          errEl.textContent='Failed to register admin.';btn.disabled=false;btn.textContent='Log In';
+        });
+      }else{
+        errEl.textContent='Wrong password';inp.classList.add('error');inp.value='';inp.focus();
+        setTimeout(function(){inp.classList.remove('error')},500);
+        btn.disabled=false;btn.textContent='Log In';
+      }
+    });
+  });
+}
+
+function _onAdminGranted(){
+  // Hide login, show panel
+  var overlay=document.getElementById('loginOverlay');
+  overlay.classList.add('hidden');
+  setTimeout(function(){overlay.style.display='none'},300);
+  document.getElementById('logoutBtn').style.display='';
+  var st=document.getElementById('fbStatus');
+  st.textContent='Logged in';st.style.display='block';st.style.background='#052814';st.style.color='#17c964';
+  setTimeout(function(){st.style.display='none'},2500);
+  // Load config + dashboard
+  FB.loadConfig().then(function(cfg){
+    if(cfg){_initConfig(cfg);localStorage.setItem('skydrop_admin_config',JSON.stringify(cfg))}
+  });
+  loadDashboard();
+  FB.onNewRound(function(){
+    var a=document.querySelector('.tab-panel.active');
+    if(a&&a.id==='tab-dashboard')loadDashboard();
+    else if(a&&a.id==='tab-rounds')loadRoundHistory();
+  });
+}
+
+function handleLogout(){
+  FB.revokeAdmin();
+  document.getElementById('logoutBtn').style.display='none';
+  var overlay=document.getElementById('loginOverlay');
+  overlay.style.display='';overlay.classList.remove('hidden');
+  document.getElementById('loginPass').value='';
+  document.getElementById('loginError').textContent='';
+  document.getElementById('loginBtn').disabled=false;document.getElementById('loginBtn').textContent='Log In';
+  var st=document.getElementById('fbStatus');
+  st.textContent='Logged out';st.style.display='block';st.style.background='#312107';st.style.color='#f5a524';
+  setTimeout(function(){st.style.display='none'},2500);
+}
+
+// ─── INIT ───
 if(typeof FB!=='undefined'){
   FB.onReady(function(online){
     var st=document.getElementById('fbStatus');
     if(online){
-      if(!FB.isAdmin()){
-        st.textContent='Access Denied — Not Admin (run FB.makeAdmin() in console first)';st.style.display='block';st.style.background='#310413';st.style.color='#f31260';
-        document.querySelector('.main-container').style.opacity='0.3';document.querySelector('.main-container').style.pointerEvents='none';
-        return;
+      if(FB.isAdmin()){
+        // Already admin (UID in Firebase) — skip login
+        _onAdminGranted();
       }
-      st.textContent='Firebase Connected';st.style.display='block';st.style.background='#052814';st.style.color='#17c964';
-      setTimeout(function(){st.style.display='none'},3000);
-      // Load config from Firebase
-      FB.loadConfig().then(function(cfg){
-        if(cfg){_initConfig(cfg);localStorage.setItem('skydrop_admin_config',JSON.stringify(cfg))}
-      });
-      // Load dashboard on startup (it's the default tab now)
-      loadDashboard();
-      // Real-time dashboard updates
-      FB.onNewRound(function(){
-        var a=document.querySelector('.tab-panel.active');
-        if(a&&a.id==='tab-dashboard')loadDashboard();
-        else if(a&&a.id==='tab-rounds')loadRoundHistory();
-      });
+      // else: login overlay stays visible, user must enter password
     }else{
+      // Offline mode — hide login, use localStorage
+      document.getElementById('loginOverlay').style.display='none';
       st.textContent='Offline Mode (localStorage)';st.style.display='block';st.style.background='#312107';st.style.color='#f5a524';
       setTimeout(function(){st.style.display='none'},3000);
       loadDashboard();

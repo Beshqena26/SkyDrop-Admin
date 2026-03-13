@@ -138,11 +138,29 @@ var FB = (function() {
 
   // ─── ADMIN ───
   function makeAdmin() {
-    if (!_db || !_uid) { console.log('Firebase not ready'); return; }
-    _db.ref('admins/' + _uid).set(true).then(function() {
+    if (!_db || !_uid) { return Promise.reject('Firebase not ready'); }
+    return _db.ref('admins/' + _uid).set(true).then(function() {
       _isAdmin = true;
-      console.log('[SkyDrop] You are now admin! UID:', _uid);
     });
+  }
+
+  // Get stored admin password hash from Firebase
+  function getAdminPassHash() {
+    if (!_db) return Promise.resolve(null);
+    return _db.ref('adminPassHash').once('value').then(function(snap) { return snap.val(); });
+  }
+
+  // Store admin password hash in Firebase
+  function setAdminPassHash(hash) {
+    if (!_db) return Promise.resolve();
+    return _db.ref('adminPassHash').set(hash);
+  }
+
+  // Remove this UID from admins (logout)
+  function revokeAdmin() {
+    if (!_db || !_uid) return Promise.resolve();
+    _isAdmin = false;
+    return _db.ref('admins/' + _uid).remove();
   }
 
   // ─── CLEAR ROUNDS BY TIME ───
@@ -185,6 +203,9 @@ var FB = (function() {
     loadRounds: loadRounds,
     onNewRound: onNewRound,
     makeAdmin: makeAdmin,
+    getAdminPassHash: getAdminPassHash,
+    setAdminPassHash: setAdminPassHash,
+    revokeAdmin: revokeAdmin,
     clearRoundsByTime: clearRoundsByTime,
     factoryReset: factoryReset
   };
