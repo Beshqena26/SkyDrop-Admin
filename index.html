@@ -44,9 +44,7 @@ body{background:var(--bg);color:var(--foreground);font-family:'Inter',system-ui,
 .navbar{position:sticky;top:0;z-index:40;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 24px;background:rgba(0,0,0,.8);backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--divider)}
 .navbar-brand{display:flex;align-items:center;gap:12px;font-weight:700;font-size:18px;letter-spacing:-.02em}
 .navbar-brand span{color:var(--foreground-400);font-size:13px;font-weight:500;padding-left:12px;border-left:1px solid var(--default-200)}
-.nav-link{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--radius-md);font-size:13px;font-weight:500;color:var(--foreground-500);text-decoration:none;transition:all .2s}
-.nav-link:hover{color:var(--foreground);background:var(--default-100)}
-.nav-link svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
 
 /* ─── Container ─── */
 .container{max-width:1024px;margin:0 auto;padding:32px 24px 64px}
@@ -393,10 +391,6 @@ tr.rh-row.expanded .rh-expand-icon{transform:rotate(90deg);color:var(--primary)}
 <nav class="navbar">
   <div class="navbar-brand">SkyDrop II <span>Admin Panel</span></div>
   <div style="display:flex;align-items:center;gap:10px">
-    <a href="https://beshqena26.github.io/SkyDrop/" class="nav-link" target="_blank">
-      <svg viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-      Back to Game
-    </a>
     <button class="nav-logout" id="logoutBtn" onclick="handleLogout()" style="display:none">Logout</button>
   </div>
 </nav>
