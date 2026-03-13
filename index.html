@@ -71,11 +71,8 @@ body{background:var(--bg);color:var(--foreground);font-family:'Inter',system-ui,
 
 /* ─── Preset Chips ─── */
 .preset-row{display:flex;gap:10px;margin-bottom:28px;flex-wrap:wrap}
-.preset-chip{flex:1;min-width:160px;padding:14px 20px;border-radius:var(--radius-lg);border:2px solid transparent;background:var(--content);cursor:pointer;transition:all .2s;text-align:center;outline:none;box-shadow:var(--shadow-sm)}
-.preset-chip:hover{background:var(--default-100)}
-.preset-chip.active{border-color:var(--primary);background:var(--primary-50)}
-.preset-chip .preset-name{font-weight:700;font-size:14px;color:var(--foreground);margin-bottom:2px}
-.preset-chip .preset-desc{font-size:11px;color:var(--foreground-400);font-weight:400}
+.preset-card .preset-name{font-weight:700;font-size:14px;color:var(--foreground);margin-bottom:2px}
+.preset-card .preset-desc{font-size:11px;color:var(--foreground-400);font-weight:400}
 .chip{display:inline-block;padding:2px 8px;border-radius:9999px;font-size:10px;font-weight:600;letter-spacing:.5px}
 .chip-success{background:var(--success-50);color:var(--success)}
 .chip-warning{background:var(--warning-50);color:var(--warning)}
@@ -233,6 +230,56 @@ tr:hover td{background:var(--default-100)}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--default-200);border-radius:3px}
+
+/* ─── Settings: Section Headers ─── */
+.settings-section{margin-bottom:28px}
+.settings-section-header{display:flex;align-items:center;gap:10px;margin-bottom:14px;padding:0 2px;cursor:default}
+.settings-section-header.clickable{cursor:pointer;user-select:none}
+.settings-section-header.clickable:hover .ssh-title{color:var(--primary)}
+.ssh-icon{font-size:18px;line-height:1}
+.ssh-title{font-size:15px;font-weight:700;color:var(--foreground);letter-spacing:-.01em;transition:color .15s}
+.ssh-sub{font-size:11px;color:var(--foreground-400);font-weight:400;margin-left:4px}
+.ssh-chevron{margin-left:auto;font-size:18px;color:var(--foreground-400);transition:transform .25s ease;display:inline-block}
+.ssh-chevron.rotated{transform:rotate(-90deg)}
+
+/* ─── Settings: Collapsible ─── */
+.settings-section-body{overflow:hidden;transition:max-height .35s ease,opacity .25s ease;max-height:800px;opacity:1}
+.settings-section-body.collapsed{max-height:0;opacity:0;pointer-events:none}
+
+/* ─── Settings: Preset Cards ─── */
+.preset-card{position:relative;flex:1;min-width:140px;padding:16px 18px;background:var(--content);border:1.5px solid var(--default-200);border-radius:var(--radius-md);cursor:pointer;text-align:left;font-family:inherit;color:var(--foreground);transition:all .2s}
+.preset-card:hover{border-color:var(--default-300);background:var(--default-100)}
+.preset-card.active{border-color:var(--primary);background:var(--primary-50)}
+.preset-check{position:absolute;top:12px;right:12px;width:20px;height:20px;border-radius:50%;border:2px solid var(--default-300);display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:11px;color:transparent}
+.preset-card.active .preset-check{border-color:var(--primary);background:var(--primary);color:#fff}
+
+/* ─── Settings: Input Unit Wrap ─── */
+.input-unit-wrap{position:relative;display:flex;align-items:center;flex:1}
+.input-unit-wrap .input{padding-right:30px;width:100%}
+.input-unit{position:absolute;right:10px;font-size:11px;font-weight:600;color:var(--foreground-400);pointer-events:none}
+
+/* ─── Settings: Field Tooltips ─── */
+.field-tip{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--default-200);color:var(--foreground-400);font-size:9px;font-weight:700;font-style:italic;cursor:help;position:relative;margin-left:4px;vertical-align:middle}
+.field-tip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--default-100);color:var(--foreground);font-size:11px;font-weight:400;font-style:normal;padding:6px 10px;border-radius:var(--radius-sm);white-space:normal;max-width:200px;box-shadow:var(--shadow-lg);border:1px solid var(--divider);opacity:0;pointer-events:none;z-index:30;transition:opacity .15s;line-height:1.4}
+.field-tip:hover::after{opacity:1}
+
+/* ─── Settings: Sticky Save Bar ─── */
+.sticky-save-bar{position:fixed;bottom:0;left:0;right:0;z-index:45;background:rgba(24,24,27,.95);backdrop-filter:saturate(180%) blur(16px);border-top:1px solid var(--divider);padding:12px 24px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+.sticky-save-bar.show{transform:translateY(0)}
+.sticky-save-inner{max-width:1024px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px}
+.ssb-label{font-size:13px;font-weight:600;color:var(--warning);display:flex;align-items:center;gap:8px}
+.ssb-dot{width:8px;height:8px;border-radius:50%;background:var(--warning);animation:ssbPulse 1.5s ease infinite}
+@keyframes ssbPulse{0%,100%{opacity:1}50%{opacity:.4}}
+.ssb-actions{display:flex;gap:8px}
+
+/* ─── Settings: Unsaved Dot on Tab ─── */
+.tab-btn{position:relative}
+.tab-btn.has-dot::after{content:'';position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--warning);box-shadow:0 0 6px var(--warning)}
+
+/* ─── Settings: Danger Zone ─── */
+.danger-zone{margin-top:32px;padding:20px;border:1px solid rgba(243,18,96,.2);border-radius:var(--radius-md);background:rgba(243,18,96,.04)}
+.danger-zone-title{font-size:13px;font-weight:700;color:var(--danger);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.danger-zone-actions{display:flex;gap:10px;flex-wrap:wrap}
 </style>
 </head>
 <body>
@@ -257,127 +304,160 @@ tr:hover td{background:var(--default-100)}
   <!-- ═══════ SETTINGS ═══════ -->
   <div class="tab-panel" id="tab-settings">
 
+    <!-- Presets -->
     <div class="preset-row">
-      <button class="preset-chip active" onclick="applyPreset('easy')" id="preEasy">
+      <button class="preset-card active" onclick="applyPreset('easy')" id="preEasy">
+        <span class="preset-check">&#10003;</span>
         <div class="preset-name">Easy <span class="chip chip-success">Presentation</span></div>
         <div class="preset-desc">High crash points, easy wins</div>
       </button>
-      <button class="preset-chip" onclick="applyPreset('normal')" id="preNormal">
+      <button class="preset-card" onclick="applyPreset('normal')" id="preNormal">
+        <span class="preset-check">&#10003;</span>
         <div class="preset-name">Normal <span class="chip chip-warning">Balanced</span></div>
         <div class="preset-desc">Fair gameplay, moderate risk</div>
       </button>
-      <button class="preset-chip" onclick="applyPreset('usual')" id="preUsual">
+      <button class="preset-card" onclick="applyPreset('usual')" id="preUsual">
+        <span class="preset-check">&#10003;</span>
         <div class="preset-name">Usual <span class="chip chip-danger">Original</span></div>
         <div class="preset-desc">Classic house-edge distribution</div>
       </button>
     </div>
 
-    <div class="grid-2">
-      <!-- Crash Point -->
-      <div class="card">
-        <div class="card-header">Crash Point Generator</div>
-        <div class="card-body">
-          <div class="field"><span class="field-label">Mode</span>
-            <select class="select" id="crashMode">
-              <option value="easy">Easy (8-78x)</option>
-              <option value="normal">Normal (1.2-30x)</option>
-              <option value="usual">Usual (house edge)</option>
-            </select>
+    <!-- ── Game Engine ── -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <span class="ssh-icon">&#9881;&#65039;</span>
+        <span class="ssh-title">Game Engine</span>
+        <span class="ssh-sub">Crash points & round timing</span>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Crash Point Generator</div>
+          <div class="card-body">
+            <div class="field"><span class="field-label">Mode <span class="field-tip" data-tip="Easy: fixed range. Normal: moderate. Usual: house-edge curve.">i</span></span>
+              <select class="select" id="crashMode">
+                <option value="easy">Easy (8-78x)</option>
+                <option value="normal">Normal (1.2-30x)</option>
+                <option value="usual">Usual (house edge)</option>
+              </select>
+            </div>
+            <div class="field"><span class="field-label">Min crash point <span class="field-tip" data-tip="Lowest possible crash multiplier before bonus">i</span></span><div class="input-unit-wrap"><input class="input" id="crashMin" type="number" step="0.1" value="8"><span class="input-unit">x</span></div></div>
+            <div class="field"><span class="field-label">Max base range <span class="field-tip" data-tip="Random range added to minimum crash point">i</span></span><div class="input-unit-wrap"><input class="input" id="crashRange" type="number" step="1" value="20"><span class="input-unit">x</span></div></div>
+            <div class="field"><span class="field-label">Bonus chance <span class="field-tip" data-tip="Probability of adding bonus to crash point">i</span></span><div class="input-unit-wrap"><input class="input" id="crashBonusChance" type="number" step="1" value="40"><span class="input-unit">%</span></div></div>
+            <div class="field"><span class="field-label">Max bonus <span class="field-tip" data-tip="Maximum extra multiplier from bonus roll">i</span></span><div class="input-unit-wrap"><input class="input" id="crashBonusMax" type="number" step="1" value="50"><span class="input-unit">x</span></div></div>
           </div>
-          <div class="field"><span class="field-label">Min crash point</span><input class="input" id="crashMin" type="number" step="0.1" value="8"></div>
-          <div class="field"><span class="field-label">Max base range</span><input class="input" id="crashRange" type="number" step="1" value="20"></div>
-          <div class="field"><span class="field-label">Bonus chance (%)</span><input class="input" id="crashBonusChance" type="number" step="1" value="40"></div>
-          <div class="field"><span class="field-label">Max bonus</span><input class="input" id="crashBonusMax" type="number" step="1" value="50"></div>
-          <div class="field-hint">Easy: min + rand(range), bonus%. Usual: 1/(1-rand) house edge.</div>
         </div>
-      </div>
-
-      <!-- Timers -->
-      <div class="card">
-        <div class="card-header">Round Timers</div>
-        <div class="card-body">
-          <div class="field"><span class="field-label">Bet time (s)</span><input class="input" id="betTime" type="number" step="0.5" value="6"></div>
-          <div class="field"><span class="field-label">Explode time (s)</span><input class="input" id="explodeTime" type="number" step="0.1" value="2.2"></div>
-          <div class="field"><span class="field-label">Crash wait (s)</span><input class="input" id="crashWait" type="number" step="0.5" value="3"></div>
-          <div class="divider"></div>
-          <div class="field"><span class="field-label">Mult speed base</span><input class="input" id="multSpeed" type="number" step="0.001" value="0.002"></div>
-          <div class="field"><span class="field-label">Mult speed accel</span><input class="input" id="multAccel" type="number" step="0.0001" value="0.00036"></div>
-          <div class="field-hint">How fast the multiplier accelerates per frame.</div>
-        </div>
-      </div>
-
-      <!-- Tokens -->
-      <div class="card">
-        <div class="card-header">Tokens</div>
-        <div class="card-body">
-          <div class="field"><span class="field-label">Max on screen</span><input class="input" id="tokenMax" type="number" step="1" value="25"></div>
-          <div class="field"><span class="field-label">Spawn rate</span><input class="input" id="tokenSpawnRate" type="number" step="0.5" value="4"></div>
-          <div class="field"><span class="field-label">Collection boost %</span><input class="input" id="tokenBoost" type="number" step="5" value="40"></div>
-          <div class="divider"></div>
-          <div class="field"><span class="field-label">Values</span><input class="input input-wide" id="tokenVals" value="1.1,1.2,1.5,2.0,3.0,5.0,7.0,10.0"></div>
-          <div class="field"><span class="field-label">Weights</span><input class="input input-wide" id="tokenWeights" value="20,20,20,15,12,7,4,2"></div>
-        </div>
-      </div>
-
-      <!-- Black Holes -->
-      <div class="card">
-        <div class="card-header">Black Holes</div>
-        <div class="card-body">
-          <div class="field"><span class="field-label">Max on screen</span><input class="input" id="bhMax" type="number" step="1" value="8"></div>
-          <div class="field"><span class="field-label">Spawn rate</span><input class="input" id="bhSpawnRate" type="number" step="0.1" value="0.8"></div>
-          <div class="field"><span class="field-label">Min mult to spawn</span><input class="input" id="bhMinMult" type="number" step="0.5" value="2"></div>
-          <div class="field"><span class="field-label">Gravity strength</span><input class="input" id="bhGravity" type="number" step="10" value="250"></div>
-          <div class="divider"></div>
-          <div class="field"><span class="field-label">Values</span><input class="input input-wide" id="bhVals" value="5,10,15,20,30,50,100"></div>
-          <div class="field"><span class="field-label">Weights</span><input class="input input-wide" id="bhWeights" value="20,25,20,15,10,7,3"></div>
-        </div>
-      </div>
-
-      <!-- Balance -->
-      <div class="card">
-        <div class="card-header">Balance & Bets</div>
-        <div class="card-body">
-          <div class="field"><span class="field-label">Starting balance</span><input class="input" id="startBal" type="number" step="100" value="1000"></div>
-          <div class="field"><span class="field-label">Min bet</span><input class="input" id="betMin" type="number" step="0.1" value="0.1"></div>
-          <div class="field"><span class="field-label">Max bet</span><input class="input" id="betMax" type="number" step="10" value="100"></div>
-          <div class="field"><span class="field-label">Max win cap</span><input class="input" id="winCap" type="number" step="1000" value="10000"></div>
-        </div>
-      </div>
-
-      <!-- Pilot Steer -->
-      <div class="card">
-        <div class="card-header">Pilot Auto-Steer</div>
-        <div class="card-body">
-          <div class="field"><span class="field-label">Token steer range</span><input class="input" id="steerTokenDist" type="number" step="50" value="500"></div>
-          <div class="field"><span class="field-label">Token steer force</span><input class="input" id="steerTokenX" type="number" step="0.5" value="2.5"></div>
-          <div class="field"><span class="field-label">BH steer range</span><input class="input" id="steerBhDist" type="number" step="50" value="350"></div>
-          <div class="field"><span class="field-label">BH steer force</span><input class="input" id="steerBhX" type="number" step="0.5" value="3"></div>
-          <div class="field"><span class="field-label">BH priority factor</span><input class="input" id="steerBhPriority" type="number" step="0.1" value="0.8"></div>
-        </div>
-      </div>
-
-      <!-- Suck Animation -->
-      <div class="card grid-full">
-        <div class="card-header">Black Hole Suck Animation</div>
-        <div class="card-body">
-          <div class="grid-2" style="gap:12px">
-            <div class="field"><span class="field-label">Suck duration (s)</span><input class="input" id="suckTime" type="number" step="0.05" value="0.4"></div>
-            <div class="field"><span class="field-label">Inside duration (s)</span><input class="input" id="insideTime" type="number" step="0.05" value="0.3"></div>
-            <div class="field"><span class="field-label">Eject duration (s)</span><input class="input" id="ejectTime" type="number" step="0.05" value="0.35"></div>
-            <div class="field"><span class="field-label">Eject distance (px)</span><input class="input" id="ejectDist" type="number" step="25" value="250"></div>
-            <div class="field"><span class="field-label">Speed boost</span><input class="input" id="bhSpeedBoost" type="number" step="0.01" value="0.03"></div>
+        <div class="card">
+          <div class="card-header">Round Timers</div>
+          <div class="card-body">
+            <div class="field"><span class="field-label">Bet time <span class="field-tip" data-tip="How long players have to place bets">i</span></span><div class="input-unit-wrap"><input class="input" id="betTime" type="number" step="0.5" value="6"><span class="input-unit">s</span></div></div>
+            <div class="field"><span class="field-label">Explode time <span class="field-tip" data-tip="Duration of explosion animation">i</span></span><div class="input-unit-wrap"><input class="input" id="explodeTime" type="number" step="0.1" value="2.2"><span class="input-unit">s</span></div></div>
+            <div class="field"><span class="field-label">Crash wait <span class="field-tip" data-tip="Pause after crash before next round">i</span></span><div class="input-unit-wrap"><input class="input" id="crashWait" type="number" step="0.5" value="3"><span class="input-unit">s</span></div></div>
+            <div class="divider"></div>
+            <div class="field"><span class="field-label">Mult speed <span class="field-tip" data-tip="Base multiplier increment per frame">i</span></span><div class="input-unit-wrap"><input class="input" id="multSpeed" type="number" step="0.001" value="0.002"><span class="input-unit">/f</span></div></div>
+            <div class="field"><span class="field-label">Mult accel <span class="field-tip" data-tip="How fast the speed accelerates over time">i</span></span><div class="input-unit-wrap"><input class="input" id="multAccel" type="number" step="0.0001" value="0.00036"><span class="input-unit">/f</span></div></div>
           </div>
-          <div class="field-hint">speed *= 1.5 + bhMult * boost value</div>
         </div>
       </div>
     </div>
 
-    <div class="actions-bar">
-      <button class="btn btn-primary" onclick="saveConfig()">Save & Apply</button>
-      <button class="btn btn-flat" onclick="resetToPreset()">Reset to Preset</button>
-      <button class="btn btn-danger" onclick="resetBalance()">Reset Balances</button>
-      <button class="btn btn-danger" onclick="clearAll()">Factory Reset</button>
+    <!-- ── Collectibles ── -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <span class="ssh-icon">&#128142;</span>
+        <span class="ssh-title">Collectibles</span>
+        <span class="ssh-sub">Tokens & black holes</span>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Tokens</div>
+          <div class="card-body">
+            <div class="field"><span class="field-label">Max on screen</span><input class="input" id="tokenMax" type="number" step="1" value="25"></div>
+            <div class="field"><span class="field-label">Spawn rate <span class="field-tip" data-tip="Tokens spawned per second">i</span></span><div class="input-unit-wrap"><input class="input" id="tokenSpawnRate" type="number" step="0.5" value="4"><span class="input-unit">/s</span></div></div>
+            <div class="field"><span class="field-label">Collection boost <span class="field-tip" data-tip="% of token value applied as crash point extension">i</span></span><div class="input-unit-wrap"><input class="input" id="tokenBoost" type="number" step="5" value="40"><span class="input-unit">%</span></div></div>
+            <div class="divider"></div>
+            <div class="field"><span class="field-label">Values <span class="field-tip" data-tip="Comma-separated multiplier values for tokens">i</span></span><input class="input input-wide" id="tokenVals" value="1.1,1.2,1.5,2.0,3.0,5.0,7.0,10.0"></div>
+            <div class="field"><span class="field-label">Weights <span class="field-tip" data-tip="Relative spawn weights matching each value">i</span></span><input class="input input-wide" id="tokenWeights" value="20,20,20,15,12,7,4,2"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">Black Holes</div>
+          <div class="card-body">
+            <div class="field"><span class="field-label">Max on screen</span><input class="input" id="bhMax" type="number" step="1" value="8"></div>
+            <div class="field"><span class="field-label">Spawn rate <span class="field-tip" data-tip="Black holes spawned per second">i</span></span><div class="input-unit-wrap"><input class="input" id="bhSpawnRate" type="number" step="0.1" value="0.8"><span class="input-unit">/s</span></div></div>
+            <div class="field"><span class="field-label">Min mult <span class="field-tip" data-tip="Multiplier must reach this before holes appear">i</span></span><div class="input-unit-wrap"><input class="input" id="bhMinMult" type="number" step="0.5" value="2"><span class="input-unit">x</span></div></div>
+            <div class="field"><span class="field-label">Gravity <span class="field-tip" data-tip="Pull strength in pixels per frame">i</span></span><div class="input-unit-wrap"><input class="input" id="bhGravity" type="number" step="10" value="250"><span class="input-unit">px</span></div></div>
+            <div class="divider"></div>
+            <div class="field"><span class="field-label">Values <span class="field-tip" data-tip="Comma-separated multiplier values for holes">i</span></span><input class="input input-wide" id="bhVals" value="5,10,15,20,30,50,100"></div>
+            <div class="field"><span class="field-label">Weights <span class="field-tip" data-tip="Relative spawn weights matching each value">i</span></span><input class="input input-wide" id="bhWeights" value="20,25,20,15,10,7,3"></div>
+          </div>
+        </div>
+      </div>
     </div>
+
+    <!-- ── Economy ── -->
+    <div class="settings-section">
+      <div class="settings-section-header">
+        <span class="ssh-icon">&#128176;</span>
+        <span class="ssh-title">Economy</span>
+        <span class="ssh-sub">Balance & betting limits</span>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">Balance & Bets</div>
+          <div class="card-body">
+            <div class="field"><span class="field-label">Starting balance</span><div class="input-unit-wrap"><input class="input" id="startBal" type="number" step="100" value="1000"><span class="input-unit">$</span></div></div>
+            <div class="field"><span class="field-label">Min bet</span><div class="input-unit-wrap"><input class="input" id="betMin" type="number" step="0.1" value="0.1"><span class="input-unit">$</span></div></div>
+            <div class="field"><span class="field-label">Max bet</span><div class="input-unit-wrap"><input class="input" id="betMax" type="number" step="10" value="100"><span class="input-unit">$</span></div></div>
+            <div class="field"><span class="field-label">Max win cap <span class="field-tip" data-tip="Maximum payout per round per player">i</span></span><div class="input-unit-wrap"><input class="input" id="winCap" type="number" step="1000" value="10000"><span class="input-unit">$</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Advanced (collapsible) ── -->
+    <div class="settings-section" id="advancedSection">
+      <div class="settings-section-header clickable" onclick="toggleAdvanced()">
+        <span class="ssh-icon">&#128295;</span>
+        <span class="ssh-title">Advanced</span>
+        <span class="ssh-sub">Pilot steering & animations</span>
+        <span class="ssh-chevron rotated" id="advChevron">&#9660;</span>
+      </div>
+      <div class="settings-section-body collapsed" id="advancedBody">
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header">Pilot Auto-Steer</div>
+            <div class="card-body">
+              <div class="field"><span class="field-label">Token steer range <span class="field-tip" data-tip="How far pilot detects tokens">i</span></span><div class="input-unit-wrap"><input class="input" id="steerTokenDist" type="number" step="50" value="500"><span class="input-unit">px</span></div></div>
+              <div class="field"><span class="field-label">Token steer force</span><div class="input-unit-wrap"><input class="input" id="steerTokenX" type="number" step="0.5" value="2.5"><span class="input-unit">x</span></div></div>
+              <div class="field"><span class="field-label">BH steer range</span><div class="input-unit-wrap"><input class="input" id="steerBhDist" type="number" step="50" value="350"><span class="input-unit">px</span></div></div>
+              <div class="field"><span class="field-label">BH steer force</span><div class="input-unit-wrap"><input class="input" id="steerBhX" type="number" step="0.5" value="3"><span class="input-unit">x</span></div></div>
+              <div class="field"><span class="field-label">BH priority <span class="field-tip" data-tip="Higher = pilot avoids holes more aggressively">i</span></span><div class="input-unit-wrap"><input class="input" id="steerBhPriority" type="number" step="0.1" value="0.8"><span class="input-unit">x</span></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header">Black Hole Animation</div>
+            <div class="card-body">
+              <div class="field"><span class="field-label">Suck duration</span><div class="input-unit-wrap"><input class="input" id="suckTime" type="number" step="0.05" value="0.4"><span class="input-unit">s</span></div></div>
+              <div class="field"><span class="field-label">Inside duration</span><div class="input-unit-wrap"><input class="input" id="insideTime" type="number" step="0.05" value="0.3"><span class="input-unit">s</span></div></div>
+              <div class="field"><span class="field-label">Eject duration</span><div class="input-unit-wrap"><input class="input" id="ejectTime" type="number" step="0.05" value="0.35"><span class="input-unit">s</span></div></div>
+              <div class="field"><span class="field-label">Eject distance</span><div class="input-unit-wrap"><input class="input" id="ejectDist" type="number" step="25" value="250"><span class="input-unit">px</span></div></div>
+              <div class="field"><span class="field-label">Speed boost <span class="field-tip" data-tip="speed *= 1.5 + bhMult * this value">i</span></span><div class="input-unit-wrap"><input class="input" id="bhSpeedBoost" type="number" step="0.01" value="0.03"><span class="input-unit">x</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Danger Zone ── -->
+    <div class="danger-zone">
+      <div class="danger-zone-title">&#9888;&#65039; Danger Zone</div>
+      <div class="danger-zone-actions">
+        <button class="btn btn-danger btn-sm" onclick="resetBalance()">Reset Balances</button>
+        <button class="btn btn-danger btn-sm" onclick="clearAll()">Factory Reset</button>
+      </div>
+    </div>
+
   </div>
 
   <!-- ═══════ DASHBOARD ═══════ -->
@@ -452,6 +532,17 @@ tr:hover td{background:var(--default-100)}
   </div>
 </div>
 
+<!-- ─── Sticky Save Bar ─── -->
+<div class="sticky-save-bar" id="stickyBar">
+  <div class="sticky-save-inner">
+    <span class="ssb-label"><span class="ssb-dot"></span> Unsaved changes</span>
+    <div class="ssb-actions">
+      <button class="btn btn-flat btn-sm" onclick="resetToPreset()">Reset</button>
+      <button class="btn btn-primary btn-sm" onclick="saveConfig()">Save & Apply</button>
+    </div>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 <div class="fb-status" id="fbStatus" style="position:fixed;bottom:16px;right:16px;padding:8px 14px;border-radius:9999px;font-size:11px;font-weight:600;z-index:50;display:none"></div>
 
@@ -471,17 +562,44 @@ var ALL_FIELDS=['crashMode','crashMin','crashRange','crashBonusChance','crashBon
 
 function getConfig(){var c={};ALL_FIELDS.forEach(function(f){var e=document.getElementById(f);if(!e)return;c[f]=e.tagName==='SELECT'?e.value:e.type==='number'?parseFloat(e.value)||0:e.value});return c}
 function setConfig(c){ALL_FIELDS.forEach(function(f){var e=document.getElementById(f);if(e&&c[f]!==undefined)e.value=c[f]})}
-function applyPreset(n){if(!PRESETS[n])return;setConfig(PRESETS[n]);document.querySelectorAll('.preset-chip').forEach(function(b){b.classList.remove('active')});var el=document.getElementById('pre'+n.charAt(0).toUpperCase()+n.slice(1));if(el)el.classList.add('active');saveConfig();toast('Mode: '+n+' applied')}
+function applyPreset(n){if(!PRESETS[n])return;setConfig(PRESETS[n]);document.querySelectorAll('.preset-card').forEach(function(b){b.classList.remove('active')});var el=document.getElementById('pre'+n.charAt(0).toUpperCase()+n.slice(1));if(el)el.classList.add('active');saveConfig();toast('Mode: '+n+' applied')}
 function saveConfig(){
   var cfg=getConfig();
   localStorage.setItem('skydrop_admin_config',JSON.stringify(cfg));
-  // Save to Firebase if online
+  _savedSnapshot=_takeSnapshot();
+  _checkDirty();
   if(typeof FB!=='undefined'&&FB.isOnline()){
     FB.saveConfig(cfg).then(function(){toast('Settings saved (synced)')}).catch(function(){toast('Settings saved (local only)')});
   }else{toast('Settings saved')}
 }
-function resetToPreset(){var a=document.querySelector('.preset-chip.active');applyPreset(a?a.id.replace('pre','').toLowerCase():'easy')}
+function resetToPreset(){var a=document.querySelector('.preset-card.active');applyPreset(a?a.id.replace('pre','').toLowerCase():'easy')}
 function resetBalance(){localStorage.removeItem('skydrop_balance');toast('Balances reset')}
+
+// ── Dirty Tracking ──
+var _savedSnapshot='';
+function _takeSnapshot(){return JSON.stringify(getConfig())}
+function _checkDirty(){
+  var dirty=(_takeSnapshot()!==_savedSnapshot);
+  var bar=document.getElementById('stickyBar');
+  if(bar)bar.classList.toggle('show',dirty);
+  var tabBtn=document.querySelector('.tab-btn[data-tab="settings"]');
+  if(tabBtn)tabBtn.classList.toggle('has-dot',dirty);
+}
+function _initDirtyTracking(){
+  _savedSnapshot=_takeSnapshot();
+  var tab=document.getElementById('tab-settings');
+  if(tab){tab.addEventListener('input',_checkDirty);tab.addEventListener('change',_checkDirty)}
+}
+
+// ── Collapsible Advanced ──
+function toggleAdvanced(){
+  var body=document.getElementById('advancedBody');
+  var chev=document.getElementById('advChevron');
+  if(!body)return;
+  var isCollapsed=body.classList.contains('collapsed');
+  body.classList.toggle('collapsed',!isCollapsed);
+  if(chev)chev.classList.toggle('rotated',!isCollapsed);
+}
 function clearAll(){
   showModal({
     icon:'danger',emoji:'\u26A0\uFE0F',
@@ -916,13 +1034,16 @@ function _initConfig(c){
   if(!c)return;
   setConfig(c);
   var m=c.crashMode||'easy';
-  document.querySelectorAll('.preset-chip').forEach(function(b){b.classList.remove('active')});
+  document.querySelectorAll('.preset-card').forEach(function(b){b.classList.remove('active')});
   var b=document.getElementById('pre'+m.charAt(0).toUpperCase()+m.slice(1));if(b)b.classList.add('active');
+  _savedSnapshot=_takeSnapshot();
+  _checkDirty();
 }
 // First load from localStorage (instant)
 (function(){
   var s=localStorage.getItem('skydrop_admin_config');
   if(s){try{_initConfig(JSON.parse(s))}catch(e){}}
+  _initDirtyTracking();
 })();
 // Then override from Firebase when ready
 if(typeof FB!=='undefined'){
